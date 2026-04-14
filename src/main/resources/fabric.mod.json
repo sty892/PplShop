@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "pplshop",
+  "version": "${version}",
+  "name": "PPLShop",
+  "description": "Client-side shop browser for sign-based stores.",
+  "authors": [],
+  "icon": "icon.png",
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-datagen": [
+      "styy.pplShop.pplshop.client.PplshopDataGenerator"
+    ],
+    "client": [
+      "styy.pplShop.pplshop.client.PplshopClient"
+    ],
+    "modmenu": [
+      "styy.pplShop.pplshop.client.integration.PplShopModMenuIntegration"
+    ],
+    "main": [
+      "styy.pplShop.pplshop.Pplshop"
+    ]
+  },
+  "mixins": [
+    "pplshop.mixins.json",
+    {
+      "config": "pplshop.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}",
+    "modmenu": ">=15.0.0"
+  }
+}

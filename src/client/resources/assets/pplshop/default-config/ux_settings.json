@@ -1,0 +1,10 @@
+{
+  "showStaleCacheWarning": true,
+  "autoRefreshMode": "WEEKLY",
+  "suppressManualRefreshWarning": false,
+  "autoRefreshIfSnapshotTooSmall": false,
+  "minimumExpectedEntries": 100,
+  "persistCacheBetweenSessions": true,
+  "preferredPriceBasis": "PER_UNIT",
+  "refreshBudgetPerTick": 12
+}

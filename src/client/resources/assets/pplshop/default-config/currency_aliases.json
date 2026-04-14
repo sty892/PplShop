@@ -1,0 +1,76 @@
+﻿{
+  "diamond": {
+    "item_id": "minecraft:diamond",
+    "aliases": [
+      "алм",
+      "алмаз",
+      "алмаза",
+      "алмазов",
+      "алмазы",
+      "алмазик",
+      "ал",
+      "aлм",
+      "aл",
+      "alm",
+      "diam",
+      "diamond",
+      "diamonds",
+      "dia",
+      "dmd"
+    ]
+  },
+  "diamond_block": {
+    "item_id": "minecraft:diamond_block",
+    "aliases": [
+      "аб",
+      "aб",
+      "ab",
+      "алм блок",
+      "алм блоки",
+      "алмазный блок",
+      "алмазные блоки",
+      "алмаз блок",
+      "diamond block",
+      "diamond blocks"
+    ]
+  },
+  "diamond": {
+    "item_id": "minecraft:diamond",
+    "aliases": [
+      "алм",
+      "алмаз",
+      "алмаза",
+      "алмазов",
+      "ал",
+      "алмз",
+      "ал.",
+      "aлм",
+      "aл",
+      "diamond",
+      "diamonds"
+    ]
+  },
+  "diamond_block": {
+    "item_id": "minecraft:diamond_block",
+    "aliases": [
+      "аб",
+      "aб",
+      "ab",
+      "а.б.",
+      "аб.",
+      "алм блок",
+      "алмазный блок",
+      "алмазные блоки"
+    ]
+  },
+  "free": {
+    "item_id": null,
+    "aliases": [
+      "бесплатно",
+      "беспл",
+      "бесп",
+      "free",
+      "даром"
+    ]
+  }
+}

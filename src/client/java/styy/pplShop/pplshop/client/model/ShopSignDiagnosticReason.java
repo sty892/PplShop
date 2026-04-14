@@ -1,0 +1,15 @@
+package styy.pplShop.pplshop.client.model;
+
+public enum ShopSignDiagnosticReason {
+    NONE,
+    BLACKLISTED_KEYWORD,
+    NOT_SHOP_NO_CONTAINER,
+    NOT_SHOP_NO_PRICE,
+    NOT_SHOP_NO_ITEM_LINES,
+    UNKNOWN_ITEM_AFTER_CLASSIFICATION,
+    CONFIRMED_UNRESOLVABLE,
+    CACHE_HIT,
+    NEGATIVE_CACHE_HIT,
+    DIRTY_REPARSE,
+    FULL_REBUILD
+}
