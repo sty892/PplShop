@@ -5,14 +5,16 @@ import net.minecraft.util.Identifier;
 import java.util.Map;
 
 public final class AliasTargetMappings {
-    private static final Map<String, AliasTargetMetadata> LEGACY_BUCKETS = Map.of(
-            "minecraft:fire_resistance_potion", new AliasTargetMetadata("minecraft:fire_resistance_potion", Identifier.of("minecraft", "potion"), "fire_resistance", ""),
-            "minecraft:swiftness_potion", new AliasTargetMetadata("minecraft:swiftness_potion", Identifier.of("minecraft", "potion"), "swiftness", ""),
-            "minecraft:night_vision_potion", new AliasTargetMetadata("minecraft:night_vision_potion", Identifier.of("minecraft", "potion"), "night_vision", ""),
-            "minecraft:invisibility_potion", new AliasTargetMetadata("minecraft:invisibility_potion", Identifier.of("minecraft", "potion"), "invisibility", ""),
-            "minecraft:regeneration_potion", new AliasTargetMetadata("minecraft:regeneration_potion", Identifier.of("minecraft", "potion"), "regeneration", ""),
-            "minecraft:concrete_powder", new AliasTargetMetadata("minecraft:concrete_powder", Identifier.of("minecraft", "white_concrete_powder"), "generic_concrete_powder", ""),
-            "minecraft:trim_smithing_template", new AliasTargetMetadata("minecraft:trim_smithing_template", Identifier.of("minecraft", "sentry_armor_trim_smithing_template"), "generic_trim_template", "")
+    private static final Map<String, AliasTargetMetadata> LEGACY_BUCKETS = Map.ofEntries(
+            Map.entry("minecraft:fire_resistance_potion", new AliasTargetMetadata("minecraft:fire_resistance_potion", Identifier.of("minecraft", "potion"), "fire_resistance", "")),
+            Map.entry("minecraft:swiftness_potion", new AliasTargetMetadata("minecraft:swiftness_potion", Identifier.of("minecraft", "potion"), "swiftness", "")),
+            Map.entry("minecraft:night_vision_potion", new AliasTargetMetadata("minecraft:night_vision_potion", Identifier.of("minecraft", "potion"), "night_vision", "")),
+            Map.entry("minecraft:invisibility_potion", new AliasTargetMetadata("minecraft:invisibility_potion", Identifier.of("minecraft", "potion"), "invisibility", "")),
+            Map.entry("minecraft:regeneration_potion", new AliasTargetMetadata("minecraft:regeneration_potion", Identifier.of("minecraft", "potion"), "regeneration", "")),
+            Map.entry("minecraft:concrete_powder", new AliasTargetMetadata("minecraft:concrete_powder", Identifier.of("minecraft", "white_concrete_powder"), "generic_concrete_powder", "")),
+            Map.entry("minecraft:concrete", new AliasTargetMetadata("minecraft:concrete", Identifier.of("minecraft", "white_concrete"), "generic_concrete", "")),
+            Map.entry("minecraft:coral_block", new AliasTargetMetadata("minecraft:coral_block", Identifier.of("minecraft", "tube_coral_block"), "generic_coral_block", "")),
+            Map.entry("minecraft:trim_smithing_template", new AliasTargetMetadata("minecraft:trim_smithing_template", Identifier.of("minecraft", "sentry_armor_trim_smithing_template"), "generic_trim_template", ""))
     );
 
     private AliasTargetMappings() {
