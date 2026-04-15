@@ -628,7 +628,11 @@
   ],
   "minecraft:copper_block": [
     "медь",
-    "медные блоки ц"
+    "медные блоки ц",
+    "вощенные медные блоки",
+    "вощеные медные блоки",
+    "вощенные окисл медные блоки",
+    "вощенные окис с медные блоки"
   ],
   "minecraft:raw_copper_block": [
     "блок руд мед",
@@ -989,6 +993,9 @@
   "minecraft:bow": [
     "лук починка бесконечность"
   ],
+  "minecraft:book": [
+    "книги обычные"
+  ],
   "minecraft:sculk": [
     "скалк sculk"
   ],
@@ -1035,7 +1042,7 @@
     "светлые чернил мешочке"
   ],
   "minecraft:iron_ore": [
-    "железная руда"
+    "желеная руда"
   ],
   "minecraft:sugar_cane": [
     "сахарный тра"
@@ -1043,7 +1050,7 @@
   "minecraft:enchanted_book_punch": [
     "откидывание ii"
   ],
-  "minecraft:blue_axolotl_bucket": [
+  "minecraft:axolotl_bucket": [
     "аксолотли синие"
   ]
 }
