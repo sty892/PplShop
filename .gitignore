@@ -1,4 +1,30 @@
-.gradle-home/ 
-.gradle/ 
-build/ 
-.idea/ 
+# Gradle
+.gradle/
+.gradle-home/
+build/
+out/
+run/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Logs and debug output
+logs/
+*.log
+debug/
+debug*.txt
+*debug*.txt
+*-overview.txt
+*-sign-unresolved-entries.txt
+count_output.txt
+
+# Local/generated helper outputs
+item_aliases_user_patched.json
+
+# OS junk
+.DS_Store
+Thumbs.db
