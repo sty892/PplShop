@@ -200,7 +200,7 @@ class ShopPipelineRegressionTest {
 
     @Test
     void axolotlResolvesSafely() {
-        assertEquals(Identifier.of("minecraft:axolotl"), resolveItemId("\u0410\u043a\u0441\u043e\u043b\u043e\u0442\u043b\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:axolotl_spawn_egg"), resolveItemId("\u0410\u043a\u0441\u043e\u043b\u043e\u0442\u043b\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
     }
 
     @Test
