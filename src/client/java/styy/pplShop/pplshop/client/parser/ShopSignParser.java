@@ -36,7 +36,6 @@ public final class ShopSignParser {
             "\u0443\u0441\u043b\u0443\u0433\u0438",
             "\u0437\u0430\u043a\u0430\u0437",
             "\u0440\u0430\u0431\u043e\u0442\u0430",
-            "\u043f\u043e\u0447\u0438\u043d\u043a\u0430",
             "\u0440\u0435\u043c\u043e\u043d\u0442"
     );
 
@@ -260,7 +259,11 @@ public final class ShopSignParser {
     }
 
     static String confirmedUnresolvableNoPriceReason(List<String> itemLines) {
-        return confirmedUnresolvableStructuredReason(itemLines);
+        String structured = confirmedUnresolvableStructuredReason(itemLines);
+        if (structured.startsWith("confirmed-unresolvable:")) {
+            return structured;
+        }
+        return "";
     }
 
     static String confirmedUnresolvableEarlyReason(List<String> lines, List<String> itemLines) {
@@ -268,7 +271,11 @@ public final class ShopSignParser {
         if (!serviceReason.isBlank()) {
             return serviceReason;
         }
-        return confirmedUnresolvableStructuredReason(itemLines);
+        String structured = confirmedUnresolvableStructuredReason(itemLines);
+        if (structured.startsWith("confirmed-unresolvable:")) {
+            return structured;
+        }
+        return "";
     }
 
     static String serviceSignReason(String firstLine) {
@@ -300,7 +307,7 @@ public final class ShopSignParser {
         }
 
         if (enchantPriceLines >= 2) {
-            return "confirmed-unresolvable:enchant-price-list";
+            return "enchant-price-list";
         }
         if (trailingPriceLines >= 2) {
             return "confirmed-unresolvable:multi-disc-listing";

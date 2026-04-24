@@ -37,10 +37,7 @@ final class ItemCandidateExtractor {
             "\u0430\u0440\u0435\u043d\u0434"
     );
     private static final Set<String> SERVICE_TOKENS = Set.of(
-            "\u0444\u0443\u043b\u043b",
-            "\u0444\u0443\u043b",
-            "\u0437\u0430\u0447\u0430\u0440",
-            "full"
+            "\u0437\u0430\u0447\u0430\u0440"
     );
     private static final Set<String> NON_ITEM_PHRASES = Set.of(
             "\u0431\u0435\u0441\u043f\u043b\u0430\u0442\u043d\u043e",

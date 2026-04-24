@@ -259,6 +259,16 @@ public final class ItemAliasResolver {
             List<String> itemLines,
             List<String> rejectedCandidates
     ) {
+        if ("enchant-price-list".equals(ShopSignParser.confirmedUnresolvableStructuredReason(itemLines))) {
+            ItemCandidateExtractor.ItemCandidate candidate = candidates.isEmpty() ? null : candidates.getFirst();
+            if (candidate != null) {
+                AliasTarget target = this.aliasTargetForSuggestion(Identifier.of("minecraft:enchanted_book"), "enchant-price-list");
+                return new CandidateMatch(
+                        candidate, target, 200_000, ParseStatus.PARTIAL, "enchant-price-list", ItemResolutionResultType.SUGGESTED_FALLBACK, true
+                ).toParsedItem(List.of("enchant-price-list detected"), rejectedCandidates, List.of(), "enchant-price-list");
+            }
+        }
+
         for (ItemCandidateExtractor.ItemCandidate candidate : candidates) {
             ParsedItem commaSeparated = this.resolveCommaSeparatedCandidate(candidate, itemLines, rejectedCandidates);
             if (commaSeparated != null) {

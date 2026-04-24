@@ -358,7 +358,7 @@ class ShopPipelineRegressionTest {
     }
 
     @Test
-    void enchantPriceListWithoutStandardPriceBecomesConfirmedUnresolvable() {
+    void enchantPriceListWithoutStandardPricePasses() {
         List<String> lines = List.of(
                 "\u0421\u0438\u043b\u0430 - 4\u0430\u043b\u043c",
                 "\u041f\u0440\u043e\u0447\u043d\u043e\u0441\u0442\u044c - 1\u0430\u043b",
@@ -367,11 +367,12 @@ class ShopPipelineRegressionTest {
         );
         int ownerLineIndex = classifier.findOwnerLineIndex(lines, -1);
         List<String> itemLines = classifier.extractItemLines(lines, ownerLineIndex, -1);
-        assertEquals("confirmed-unresolvable:enchant-price-list", ShopSignParser.confirmedUnresolvableNoPriceReason(itemLines));
+        assertEquals("", ShopSignParser.confirmedUnresolvableNoPriceReason(itemLines));
+        assertEquals(Identifier.of("minecraft:enchanted_book"), resolveItemId(lines.get(0), lines.get(1), lines.get(2), lines.get(3)));
     }
 
     @Test
-    void enchantPriceListWithParenthesesBecomesConfirmedUnresolvable() {
+    void enchantPriceListWithParenthesesPassesEarlyDetection() {
         List<String> lines = List.of(
                 "\u0417\u0430\u0449\u0438\u0442\u0430 (2\u0430\u043b\u043c)",
                 "\u041f\u0440\u043e\u0447\u043d\u043e\u0441\u0442\u044c(1\u0430\u043b\u043c)",
@@ -380,11 +381,12 @@ class ShopPipelineRegressionTest {
         );
         int ownerLineIndex = classifier.findOwnerLineIndex(lines, -1);
         List<String> itemLines = classifier.extractItemLines(lines, ownerLineIndex, -1);
-        assertEquals("confirmed-unresolvable:enchant-price-list", ShopSignParser.confirmedUnresolvableStructuredReason(itemLines));
+        assertEquals("", ShopSignParser.confirmedUnresolvableEarlyReason(lines, itemLines));
+        assertEquals(Identifier.of("minecraft:enchanted_book"), resolveItemId(lines.get(0), lines.get(1), lines.get(2), lines.get(3)));
     }
 
     @Test
-    void enchantPriceListWithParsedPriceStillTriggersEarlyDetection() {
+    void enchantPriceListWithParsedPricePassesEarlyDetection() {
         List<String> lines = List.of(
                 "\u0421\u0438\u043b\u0430 - 4\u0430\u043b\u043c",
                 "\u041f\u0440\u043e\u0447\u043d\u043e\u0441\u0442\u044c - 1\u0430\u043b",
@@ -393,7 +395,8 @@ class ShopPipelineRegressionTest {
         );
         int ownerLineIndex = classifier.findOwnerLineIndex(lines, priceParser.extract(lines).lineIndex());
         List<String> itemLines = classifier.extractItemLines(lines, ownerLineIndex, -1);
-        assertEquals("confirmed-unresolvable:enchant-price-list", ShopSignParser.confirmedUnresolvableEarlyReason(lines, itemLines));
+        assertEquals("", ShopSignParser.confirmedUnresolvableEarlyReason(lines, itemLines));
+        assertEquals(Identifier.of("minecraft:enchanted_book"), resolveItemId(lines.get(0), lines.get(1), lines.get(2), lines.get(3)));
     }
 
     @Test
