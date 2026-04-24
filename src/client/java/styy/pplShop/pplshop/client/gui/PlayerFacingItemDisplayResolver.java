@@ -61,6 +61,11 @@ public final class PlayerFacingItemDisplayResolver {
         if ("generic_trim_template".equals(subtypeKey) || "minecraft:trim_smithing_template".equals(bucketId)) {
             return title("item.pplshop.category.armor_trim_template");
         }
+        if ("mixed_item".equals(subtypeKey) || "pplshop:mixed_item".equals(bucketId)) {
+            return entry.parsedItem().displayNameOverride().isBlank()
+                    ? title("item.pplshop.mixed_item")
+                    : entry.parsedItem().displayNameOverride();
+        }
         if (resolvedItemId != null && isPotionItem(resolvedItemId) && !subtypeKey.isBlank()) {
             return this.resolvePotionTitle(resolvedItemId, subtypeKey);
         }
@@ -87,6 +92,11 @@ public final class PlayerFacingItemDisplayResolver {
             case "night_vision" -> "item.pplshop.potion.effect.night_vision";
             case "invisibility" -> "item.pplshop.potion.effect.invisibility";
             case "regeneration" -> "item.pplshop.potion.effect.regeneration";
+            case "strength" -> "item.pplshop.potion.effect.strength";
+            case "healing" -> "item.pplshop.potion.effect.healing";
+            case "slow_falling" -> "item.pplshop.potion.effect.slow_falling";
+            case "slowness" -> "item.pplshop.potion.effect.slowness";
+            case "water_breathing" -> "item.pplshop.potion.effect.water_breathing";
             default -> "item.pplshop.potion.effect.generic";
         };
         return Text.translatable(typeKey, Text.translatable(effectKey)).getString();

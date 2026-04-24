@@ -12,6 +12,8 @@ import styy.pplShop.pplshop.client.config.CurrencyAliasConfig;
 import styy.pplShop.pplshop.client.config.ItemAliasConfig;
 import styy.pplShop.pplshop.client.config.ParserRulesConfig;
 import styy.pplShop.pplshop.client.config.AliasTargetMappings;
+import styy.pplShop.pplshop.client.model.ItemResolutionResultType;
+import styy.pplShop.pplshop.client.model.ParsedItem;
 import styy.pplShop.pplshop.client.model.ShopSignClassificationType;
 import styy.pplShop.pplshop.client.model.ShopSignDiagnosticReason;
 import styy.pplShop.pplshop.client.model.ShopSignFingerprint;
@@ -54,7 +56,7 @@ class ShopPipelineRegressionTest {
         List<String> lines = List.of("\u0411\u043e\u0447\u043a\u0430 \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u0438", "", "", "Owner_01");
         ShopSignClassifier.Classification classification = classifier.classify(lines, priceParser.extract(lines), barrelRelation());
         assertEquals(ShopSignClassificationType.NOT_SHOP, classification.type());
-        assertEquals(ShopSignDiagnosticReason.NOT_SHOP_NO_PRICE, classification.reason());
+        assertEquals(ShopSignDiagnosticReason.BLACKLISTED_KEYWORD, classification.reason());
     }
 
     @Test
@@ -200,7 +202,7 @@ class ShopPipelineRegressionTest {
 
     @Test
     void axolotlResolvesSafely() {
-        assertEquals(Identifier.of("minecraft:axolotl_spawn_egg"), resolveItemId("\u0410\u043a\u0441\u043e\u043b\u043e\u0442\u043b\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:axolotl_bucket"), resolveItemId("\u0410\u043a\u0441\u043e\u043b\u043e\u0442\u043b\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
     }
 
     @Test
@@ -209,10 +211,70 @@ class ShopPipelineRegressionTest {
     }
 
     @Test
-    void mixedLineDoesNotResolveToRandomItem() {
+    void mixedLineDoesNotResolveToRandomSingleItem() {
         assertNull(resolveItemId("\u0410\u043a\u0441\u043e\u043b\u043e\u0442\u043b\u0438 \u0438 \u0438\u0433\u043b\u043e\u0431\u0440\u044e\u0445\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
-        assertNull(resolveItemId("\u0410\u0440\u0431\u0443\u0437 \u0438 \u0442\u044b\u043a\u0432\u0430", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
-        assertNull(resolveItemId("\u041a\u043d\u0438\u0433\u0430 \u0438 \u043f\u0435\u0440\u043e", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertMixed(resolveItem("\u0410\u0440\u0431\u0443\u0437 \u0438 \u0422\u044b\u043a\u0432\u0430", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:writable_book"), resolveItemId("\u041a\u043d\u0438\u0433\u0430 \u0438 \u043f\u0435\u0440\u043e", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+    }
+
+    @Test
+    void debugDumpSingleItemAliasesResolve() {
+        assertEquals(Identifier.of("minecraft:iron_block"), resolveItemId("\u0436\u0435\u043b\u0435\u0437 \u0431\u043b\u043e\u043a \u0446\u0446\u0446\u0446", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:emerald_block"), resolveItemId("\u0418\u0437\u0443\u043c\u0440\u0443\u0434 \u0431\u043b\u043e\u043a\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:slime_block"), resolveItemId("c\u043b\u0430\u0439\u043c \u0431\u043b\u043e\u043a\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:fire_charge"), resolveItemId("\u041e\u0433\u043d\u0435\u043d\u043d\u044b\u0439 \u0441\u043d\u0430\u0440\u044f\u0434", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:cobweb"), resolveItemId("\u041f\u0430\u0443\u0442\u0438\u043d\u0430 Codweb", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:cornflower"), resolveItemId("\u0421\u0438\u043d\u0438\u0439 \u0432\u0430\u0441\u0438\u043b\u0451\u043a", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:peony"), resolveItemId("\u041f\u0438\u043e\u043d\u044b", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:soul_lantern"), resolveItemId("\u0444\u043e\u043d\u0430\u0440\u044c \u0434\u0443\u0448", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:mangrove_roots"), resolveItemId("\u043a\u043e\u0440\u043d\u0438 \u043c\u0430\u043d\u0433\u0440\u044b", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:oak_log"), resolveItemId("\u0414\u0443\u0431\u043e\u0432\u043e\u0435 \u0434\u0435\u0440\u0435\u0432\u043e", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:warped_stem"), resolveItemId("\u0418\u0441\u043a\u0430\u0436\u0435\u043d\u043d\u043e\u0435 \u0434\u0435\u0440\u0435\u0432\u043e", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:goat_horn"), resolveItemId("\u0420\u043e\u0433 \u041a\u043e\u0437\u044b/\u041a\u043e\u0437\u043b\u0430", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:writable_book"), resolveItemId("\u041a\u043d\u0438\u0433\u0430 \u0438 \u043f\u0435\u0440\u043e", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:nether_quartz_ore"), resolveItemId("\u0440\u0443\u0434\u0430 \u043d\u0435\u0437\u0435\u0440\u0441\u043a\u043e\u0433\u043e \u043a\u0432\u0430\u0440\u0446\u0430", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:sea_lantern"), resolveItemId("\u043c\u043e\u0440\u0441\u043a\u043e\u0439 \u0438\u0441\u0442\u043e\u0447\u043d\u0438\u043a", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:moss_block"), resolveItemId("\u0411\u043b\u043e\u043a \u043c\u0445\u0430 (\u043c\u043e\u0445)", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+    }
+
+    @Test
+    void debugDumpPotionAliasesResolveToPotionBuckets() {
+        assertPotionSubtype("\u0437\u0435\u043b\u044c\u0435 \u043d\u0435\u0432\u0438\u0434\u0435\u043c\u043e\u0441\u0442\u0438", "invisibility");
+        assertPotionSubtype("\u043d\u0438\u0432\u0435\u0434\u0438\u043c\u043a\u0438", "invisibility");
+        assertPotionSubtype("\u041f\u043b\u0430\u0432\u043d\u043e\u0435 \u043f\u0430\u0434\u0435\u043d\u0438\u0435 \u0437\u0435\u043b\u044c\u0435", "slow_falling");
+        assertPotionSubtype("\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c ii", "swiftness");
+        assertPotionSubtype("\u0437\u0435\u043b\u044c\u0435 \u0441\u0438\u043b\u044b", "strength");
+    }
+
+    @Test
+    void debugDumpMixedItemSignsResolveAsMixed() {
+        assertMixed(resolveItem("\u043a\u0430\u043b\u044c\u0446\u0438\u0442, \u0441\u043b\u0430\u043d\u0435\u0446", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertMixed(resolveItem("\u0417\u0435\u043c\u043b\u044f \u0438 \u0434\u0451\u0440\u043d", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertMixed(resolveItem("\u0437\u043b\u043e\u0432\u0435\u0449\u0438\u0435 \u043a\u043b\u044e\u0447\u0438, \u043a\u043b\u044e\u0447\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertMixed(resolveItem("\u0433\u0440\u0430\u0432\u0438\u0439 \u0438 \u043a\u0440\u0435\u043c\u0435\u043d\u044c", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+    }
+
+    @Test
+    void debugDumpPromoNoiseResolvesOnlyWhenCoreIsSafe() {
+        assertEquals(Identifier.of("minecraft:white_wool"), resolveItemId("\u041e\u0422\u041a\u0420\u042b\u0422 \u041e\u041f\u0422 \u0428\u0415\u0420\u0421\u0422\u042c 2", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:tuff"), resolveItemId("\u041a\u0443\u043f\u0438 \u0422\u0423\u0424\u0423 \u041d\u0435\u043f\u043e\u0436\u0430\u043b\u0435\u0435\u0448\u044c", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:tuff"), resolveItemId("\u0418 \u0442\u0443\u0442 \u0422\u0423\u0424! \u041a\u0423\u041f\u0418!", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:tuff"), resolveItemId("\u0422\u0423\u0424 \u0416\u0415\u0421\u0422\u042c!!", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:redstone"), resolveItemId("\u0440\u0435\u0434\u0441\u0442\u043e\u0443\u043d \u043a\u0443\u043f\u0438 \u044d\u0439 \u0447\u0443\u0432\u0430\u043a \u0439\u043e\u0443", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:arrow"), resolveItemId("\u0414\u0435\u0448\u0435\u0432\u044b\u0435 \u0441\u0442\u0440\u0435\u043b\u044b \u041d\u0435\u043a\u0442\u043e\u0440\u0441\u043a\u0430\u044f \u0446\u0435\u043d\u0430", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:crossbow"), resolveItemId("\u041a\u0440\u0443\u0442\u043e\u0439 \u0430\u0440\u0431\u0430\u043b\u0435\u0442 !\u041f\u041e\u041b\u0415\u0417\u041d\u042b\u0419!", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+    }
+
+    @Test
+    void debugDumpCustomServiceLootSignsStayUnresolved() {
+        assertNull(resolveItemId("\u0413\u0440\u0430\u0444\u0444\u0438\u0442\u0438 \u0430\u0440\u0442 \u041a\u043e\u0442\u0451\u043d\u043e\u043a 2", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "_TbMA"));
+        assertNull(resolveItemId("\u041b\u0443\u0442 \u0438\u0437 \u0424\u0435\u043c\u0431\u043e\u0439\u0441\u043a\u0430", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertNull(resolveItemId("\u042d\u0441\u0441\u0435\u043d\u0446\u0438\u044f \u0444\u0435\u043c\u0431\u043e\u044f \u0432\u043a\u0443\u0441\u043d\u0430\u044f", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertNull(resolveItemId("\u0420\u0410\u0417\u041d\u041e\u0415", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertNull(resolveItemId("\u0446\u0435\u043d\u043d\u043e\u0441\u0442\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertNull(resolveItemId("\u0441\u043a\u0438\u043d", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertNull(resolveItemId("\u0444\u0438\u0433\u0443\u0440\u0430", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertNull(resolveItemId("\u0430\u0440\u0442 \u0441 \u0432\u0430\u043c\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
     }
 
     @Test
@@ -230,12 +292,12 @@ class ShopPipelineRegressionTest {
 
     @Test
     void vagueCategoryDoesNotResolveToRepresentative() {
-        assertNull(resolveItemId("\u043c\u0435\u0434\u043d\u044b\u0435 \u0431\u043b\u043e\u043a\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:copper_block"), resolveItemId("\u043c\u0435\u0434\u043d\u044b\u0435 \u0431\u043b\u043e\u043a\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
     }
 
     @Test
     void enchantmentFallbackDoesNotResolveAsShopItem() {
-        assertNull(resolveItemId("\u043f\u0440\u043e\u0447\u043a\u0430 3", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertEquals(Identifier.of("minecraft:enchanted_book"), resolveItemId("\u043f\u0440\u043e\u0447\u043a\u0430 3", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
     }
 
     @Test
@@ -348,7 +410,26 @@ class ShopPipelineRegressionTest {
     }
 
     private static Identifier resolveItemId(String line1, String line2, String line3, String line4) {
-        return itemAliasResolver.resolve(List.of(line1, line2, line3, line4), priceParser.extract(List.of(line1, line2, line3, line4))).itemId();
+        return resolveItem(line1, line2, line3, line4).itemId();
+    }
+
+    private static ParsedItem resolveItem(String line1, String line2, String line3, String line4) {
+        List<String> lines = List.of(line1, line2, line3, line4);
+        return itemAliasResolver.resolve(lines, priceParser.extract(lines));
+    }
+
+    private static void assertMixed(ParsedItem parsedItem) {
+        assertNotNull(parsedItem);
+        assertEquals(Identifier.of("minecraft:bundle"), parsedItem.itemId());
+        assertEquals("pplshop:mixed_item", parsedItem.resolvedBucketId());
+        assertEquals("mixed_item", parsedItem.resolvedSubtypeKey());
+        assertEquals(ItemResolutionResultType.MIXED_ITEM, parsedItem.resultType());
+    }
+
+    private static void assertPotionSubtype(String itemLine, String subtypeKey) {
+        ParsedItem parsedItem = itemAliasResolver.resolveItemLines(List.of(itemLine));
+        assertEquals(Identifier.of("minecraft:potion"), parsedItem.itemId());
+        assertEquals(subtypeKey, parsedItem.resolvedSubtypeKey());
     }
 
     private static SignContainerRelation barrelRelation() {

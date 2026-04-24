@@ -105,6 +105,7 @@
   "screen.pplshop.status_badge.age.hours": "%s h",
   "screen.pplshop.status_badge.age.days": "%s d",
   "item.pplshop.unknown": "Unknown item",
+  "item.pplshop.mixed_item": "Multiple items",
   "item.pplshop.category.concrete_powder": "Concrete powder",
   "item.pplshop.category.armor_trim_template": "Armor trim template",
   "item.pplshop.potion.type.drinkable": "Potion: %s",
@@ -116,5 +117,10 @@
   "item.pplshop.potion.effect.night_vision": "night vision",
   "item.pplshop.potion.effect.invisibility": "invisibility",
   "item.pplshop.potion.effect.regeneration": "regeneration",
+  "item.pplshop.potion.effect.strength": "strength",
+  "item.pplshop.potion.effect.healing": "healing",
+  "item.pplshop.potion.effect.slow_falling": "slow falling",
+  "item.pplshop.potion.effect.slowness": "slowness",
+  "item.pplshop.potion.effect.water_breathing": "water breathing",
   "message.pplshop.refresh_trigger.gui_button": "GUI button"
 }

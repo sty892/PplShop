@@ -7,5 +7,6 @@ public enum ItemResolutionResultType {
     HIGH_CONFIDENCE_SHORTLIST,
     SAFE_FUZZY_SHORTLIST,
     SUGGESTED_FALLBACK,
+    MIXED_ITEM,
     UNKNOWN
 }

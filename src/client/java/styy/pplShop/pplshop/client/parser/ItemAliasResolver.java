@@ -24,6 +24,7 @@ public final class ItemAliasResolver {
     private static final int SAFE_FUZZY_SCORE = 95_000;
     private static final int MAX_FUZZY_ALIAS_DISTANCE = 2;
     private static final int MIN_FUZZY_ALIAS_LENGTH = 6;
+    private static final AliasTargetMetadata MIXED_ITEM_TARGET = new AliasTargetMetadata("pplshop:mixed_item", Identifier.of("minecraft", "bundle"), "mixed_item", "");
     private static final Set<String> MIXED_CONNECTORS = Set.of(
             "\u0438",
             "\u0438\u043b\u0438",
@@ -44,6 +45,34 @@ public final class ItemAliasResolver {
             "\u0438\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442\u044b",
             "\u0431\u043b\u043e\u043a",
             "\u0431\u043b\u043e\u043a\u0438"
+    );
+    private static final Set<String> NOISE_TOKENS = Set.of(
+            "купи",
+            "покупай",
+            "дешевые",
+            "дешевый",
+            "дешевая",
+            "дешево",
+            "открыто",
+            "открыт",
+            "опт",
+            "оптом",
+            "жест",
+            "жесть",
+            "крутой",
+            "крутая",
+            "крутые",
+            "полезный",
+            "полезная",
+            "полезные",
+            "непожалеешь",
+            "чувак",
+            "йоу",
+            "цена",
+            "эй",
+            "тут",
+            "некторская",
+            "некоторская"
     );
     private static final Set<String> CONFIRMED_UNRESOLVABLE_CONTAINS = Set.of(
             "\u043b\u0443\u0442 \u0438\u0437",
@@ -67,7 +96,12 @@ public final class ItemAliasResolver {
             "\u0438\u044e\u043b\u044c\u0441\u043a\u043e\u0433\u043e \u043d\u0435\u0431\u0430",
             "\u0434\u0435\u043d\u044c\u0433\u0438 \u043d\u0430 \u0432\u0435\u0442\u0435\u0440",
             "\u0436\u0435\u043b\u0435\u0437\u043d\u044b\u0435 \u0432\u0435\u0449\u0438",
-            "\u0436\u0435\u043b\u0435\u0437\u043d\u044b\u0439 \u0445\u043b\u0430\u043c"
+            "\u0436\u0435\u043b\u0435\u0437\u043d\u044b\u0439 \u0445\u043b\u0430\u043c",
+            "\u0440\u0430\u0437\u043d\u043e\u0435",
+            "\u0446\u0435\u043d\u043d\u043e\u0441\u0442\u0438",
+            "\u0441\u043a\u0438\u043d",
+            "\u0444\u0438\u0433\u0443\u0440\u0430",
+            "\u0430\u0440\u0442 \u0441 \u0432\u0430\u043c\u0438"
     );
     private static final Set<String> CONFIRMED_UNRESOLVABLE_CUSTOM_TITLE_CONTAINS = Set.of(
             "\u0444\u0435\u043c\u0431\u043e\u0439",
@@ -167,6 +201,9 @@ public final class ItemAliasResolver {
             considered.add(candidate.describe());
             CandidateMatch resolved = this.resolveCandidate(candidate);
             if (resolved == null) {
+                resolved = this.resolveNoiseStrippedCandidate(candidate);
+            }
+            if (resolved == null) {
                 List<String> candidateSuggestions = this.resolveSuggestions(candidate, itemLines);
                 suggestions.addAll(candidateSuggestions);
                 if (suggestedFallback == null && !this.isUnsafeCompositeCandidate(candidate)) {
@@ -263,11 +300,12 @@ public final class ItemAliasResolver {
         CandidateMatch right = this.resolveStandaloneCandidate(halves[1].trim(), "comma-right-half");
 
         if (left != null && right != null && !left.target().runtimeItemId().equals(right.target().runtimeItemId())) {
-            return this.unknownFromCandidate(
+            return this.mixedItemFromCandidate(
                     candidate,
                     itemLines,
                     rejectedCandidates,
                     "multi-item-sign-comma",
+                    List.of(left, right),
                     List.of(candidate.describe() + " -> multi-item-sign-comma (" + left.describe() + " | " + right.describe() + ")")
             );
         }
@@ -291,6 +329,9 @@ public final class ItemAliasResolver {
         if (candidate == null || !"joined-top-item-lines".equals(candidate.source()) || !candidate.normalizedPlain().contains(" \u0438 ")) {
             return null;
         }
+        if (this.isWritableBookPhrase(candidate)) {
+            return null;
+        }
 
         String[] halves = candidate.normalizedPlain().split("\\s+\\u0438\\s+", 2);
         if (halves.length != 2) {
@@ -303,13 +344,21 @@ public final class ItemAliasResolver {
             return null;
         }
 
-        return this.unknownFromCandidate(
+        return this.mixedItemFromCandidate(
                 candidate,
                 itemLines,
                 rejectedCandidates,
                 "multi-item-sign-conjunction",
+                List.of(left, right),
                 List.of(candidate.describe() + " -> multi-item-sign-conjunction (" + left.describe() + " | " + right.describe() + ")")
         );
+    }
+
+    private boolean isWritableBookPhrase(ItemCandidateExtractor.ItemCandidate candidate) {
+        if (candidate == null) {
+            return false;
+        }
+        return "книга и перо".equals(candidate.normalizedPlain()) || "книга и перо".equals(candidate.normalizedLookup());
     }
 
     private CandidateMatch resolveStandaloneCandidate(String rawText, String source) {
@@ -428,6 +477,58 @@ public final class ItemAliasResolver {
         );
     }
 
+    private ParsedItem mixedItemFromCandidate(
+            ItemCandidateExtractor.ItemCandidate candidate,
+            List<String> itemLines,
+            List<String> rejectedCandidates,
+            String fallbackReason,
+            List<CandidateMatch> parts,
+            List<String> consideredCandidates
+    ) {
+        String fallback = itemLines.isEmpty() ? candidate.rawText() : String.join(" ", itemLines);
+        List<String> rejected = new ArrayList<>(rejectedCandidates);
+        rejected.add(candidate.describe() + " -> " + fallbackReason);
+        String displayName = "Микс: " + parts.stream()
+                .map(this::displayNameForMixedPart)
+                .distinct()
+                .reduce((left, right) -> left + " + " + right)
+                .orElse(fallback);
+        return new ParsedItem(
+                fallback,
+                NormalizationUtils.normalizeForLookup(fallback, this.rules),
+                MIXED_ITEM_TARGET.runtimeItemId(),
+                null,
+                250_000,
+                ParseStatus.PARTIAL,
+                new ItemResolutionTrace(
+                        candidate.rawText(),
+                        candidate.source(),
+                        "mixed-item",
+                        MIXED_ITEM_TARGET.runtimeItemId().toString(),
+                        "",
+                        fallbackReason,
+                        List.of(),
+                        consideredCandidates,
+                        rejected
+                ),
+                ItemResolutionResultType.MIXED_ITEM,
+                true,
+                MIXED_ITEM_TARGET.bucketId(),
+                MIXED_ITEM_TARGET.subtypeKey(),
+                displayName
+        );
+    }
+
+    private String displayNameForMixedPart(CandidateMatch match) {
+        if (match == null || match.target() == null) {
+            return "";
+        }
+        if (match.target().rawAlias() != null && !match.target().rawAlias().isBlank()) {
+            return match.target().rawAlias();
+        }
+        return match.target().runtimeItemId().toString();
+    }
+
     private CandidateMatch resolveCandidate(ItemCandidateExtractor.ItemCandidate candidate) {
         AliasTarget exactPlain = this.plainLookup.get(candidate.normalizedPlain());
         if (exactPlain != null) {
@@ -459,6 +560,54 @@ public final class ItemAliasResolver {
         }
 
         return null;
+    }
+
+    private CandidateMatch resolveNoiseStrippedCandidate(ItemCandidateExtractor.ItemCandidate candidate) {
+        if (candidate == null || candidate.normalizedPlain().isBlank()) {
+            return null;
+        }
+
+        List<String> originalTokens = NormalizationUtils.tokenize(candidate.normalizedPlain());
+        List<String> strippedTokens = originalTokens.stream()
+                .filter(token -> !NOISE_TOKENS.contains(token))
+                .toList();
+        if (strippedTokens.isEmpty() || strippedTokens.size() == originalTokens.size()) {
+            return null;
+        }
+        for (String token : strippedTokens) {
+            if (MIXED_CONNECTORS.contains(token)) {
+                return null;
+            }
+        }
+
+        String strippedPlain = String.join(" ", strippedTokens);
+        String strippedLookup = NormalizationUtils.normalizeForLookup(strippedPlain, this.rules);
+        if (strippedLookup.isBlank()) {
+            return null;
+        }
+        ItemCandidateExtractor.ItemCandidate strippedCandidate = new ItemCandidateExtractor.ItemCandidate(
+                strippedPlain,
+                strippedPlain,
+                strippedLookup,
+                candidate.lineIndexes(),
+                candidate.source() + "-noise-stripped",
+                Math.max(0, candidate.sourcePriority() - 10),
+                strippedTokens.size(),
+                strippedPlain.replace(" ", "").length()
+        );
+        CandidateMatch match = this.resolveCandidate(strippedCandidate);
+        if (match == null || !match.safe()) {
+            return null;
+        }
+        return new CandidateMatch(
+                strippedCandidate,
+                match.target(),
+                Math.max(match.score() - 1_500, SAFE_FUZZY_SCORE),
+                ParseStatus.PARTIAL,
+                "noise-stripped+" + match.resolver(),
+                match.resultType(),
+                true
+        );
     }
 
     private CandidateMatch resolveDirectFuzzyAlias(ItemCandidateExtractor.ItemCandidate candidate) {
@@ -964,6 +1113,7 @@ public final class ItemAliasResolver {
                 case HIGH_CONFIDENCE_SHORTLIST -> 3;
                 case SAFE_FUZZY_SHORTLIST -> 2;
                 case SUGGESTED_FALLBACK -> 1;
+                case MIXED_ITEM -> 1;
                 case UNKNOWN -> 0;
             };
         }
