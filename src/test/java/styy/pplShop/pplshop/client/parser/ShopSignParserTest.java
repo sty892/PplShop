@@ -252,17 +252,15 @@ class ShopSignParserTest {
     @Test
     void multiItemConjunctionUsesFallbackReason() {
         ParsedItem parsedItem = parseItem("\u041e\u0431\u0441\u0438\u0434\u0438\u0430\u043d \u0438", "\u041a\u0440\u0435\u043c\u0435\u043d\u044c", "1 \u0430\u043b\u043c", "seller_name");
-        assertEquals(Identifier.of("minecraft:bundle"), parsedItem.itemId());
-        assertEquals(ItemResolutionResultType.MIXED_ITEM, parsedItem.resultType());
-        assertEquals("multi-item-sign-conjunction", parsedItem.resolutionTrace().fallbackReason());
+        assertEquals(Identifier.of("minecraft:obsidian"), parsedItem.itemId());
+        assertEquals("multi-item-primary-conjunction", parsedItem.resolutionTrace().fallbackReason());
     }
 
     @Test
     void multiItemCommaUsesFallbackReason() {
         ParsedItem parsedItem = parseItem("\u041a\u0430\u043b\u044c\u0446\u0438\u0442, \u0441\u043b\u0430\u043d\u0435\u0446", "1 \u0430\u043b\u043c", "", "seller_name");
-        assertEquals(Identifier.of("minecraft:bundle"), parsedItem.itemId());
-        assertEquals(ItemResolutionResultType.MIXED_ITEM, parsedItem.resultType());
-        assertEquals("multi-item-sign-comma", parsedItem.resolutionTrace().fallbackReason());
+        assertEquals(Identifier.of("minecraft:calcite"), parsedItem.itemId());
+        assertEquals("multi-item-primary-comma", parsedItem.resolutionTrace().fallbackReason());
     }
 
     @Test

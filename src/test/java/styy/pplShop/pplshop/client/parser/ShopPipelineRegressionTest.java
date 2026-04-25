@@ -12,7 +12,6 @@ import styy.pplShop.pplshop.client.config.CurrencyAliasConfig;
 import styy.pplShop.pplshop.client.config.ItemAliasConfig;
 import styy.pplShop.pplshop.client.config.ParserRulesConfig;
 import styy.pplShop.pplshop.client.config.AliasTargetMappings;
-import styy.pplShop.pplshop.client.model.ItemResolutionResultType;
 import styy.pplShop.pplshop.client.model.ParsedItem;
 import styy.pplShop.pplshop.client.model.ShopSignClassificationType;
 import styy.pplShop.pplshop.client.model.ShopSignDiagnosticReason;
@@ -207,13 +206,15 @@ class ShopPipelineRegressionTest {
 
     @Test
     void blueAxolotlResolvesSafely() {
-        assertEquals(Identifier.of("minecraft:blue_axolotl_bucket"), resolveItemId("\u0410\u043a\u0441\u043e\u043b\u043e\u0442\u043b\u044c \u0441\u0438\u043d\u0438\u0439", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        ParsedItem parsedItem = resolveItem("\u0410\u043a\u0441\u043e\u043b\u043e\u0442\u043b\u044c \u0441\u0438\u043d\u0438\u0439", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01");
+        assertEquals(Identifier.of("minecraft:axolotl_bucket"), parsedItem.itemId());
+        assertEquals("blue_axolotl", parsedItem.resolvedSubtypeKey());
     }
 
     @Test
     void mixedLineDoesNotResolveToRandomSingleItem() {
-        assertNull(resolveItemId("\u0410\u043a\u0441\u043e\u043b\u043e\u0442\u043b\u0438 \u0438 \u0438\u0433\u043b\u043e\u0431\u0440\u044e\u0445\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
-        assertMixed(resolveItem("\u0410\u0440\u0431\u0443\u0437 \u0438 \u0422\u044b\u043a\u0432\u0430", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertPrimaryMulti(Identifier.of("minecraft:axolotl_bucket"), resolveItem("\u0410\u043a\u0441\u043e\u043b\u043e\u0442\u043b\u0438 \u0438 \u0438\u0433\u043b\u043e\u0431\u0440\u044e\u0445\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertPrimaryMulti(Identifier.of("minecraft:pumpkin"), resolveItem("\u0410\u0440\u0431\u0443\u0437 \u0438 \u0422\u044b\u043a\u0432\u0430", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
         assertEquals(Identifier.of("minecraft:writable_book"), resolveItemId("\u041a\u043d\u0438\u0433\u0430 \u0438 \u043f\u0435\u0440\u043e", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
     }
 
@@ -248,10 +249,10 @@ class ShopPipelineRegressionTest {
 
     @Test
     void debugDumpMixedItemSignsResolveAsMixed() {
-        assertMixed(resolveItem("\u043a\u0430\u043b\u044c\u0446\u0438\u0442, \u0441\u043b\u0430\u043d\u0435\u0446", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
-        assertMixed(resolveItem("\u0417\u0435\u043c\u043b\u044f \u0438 \u0434\u0451\u0440\u043d", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
-        assertMixed(resolveItem("\u0437\u043b\u043e\u0432\u0435\u0449\u0438\u0435 \u043a\u043b\u044e\u0447\u0438, \u043a\u043b\u044e\u0447\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
-        assertMixed(resolveItem("\u0433\u0440\u0430\u0432\u0438\u0439 \u0438 \u043a\u0440\u0435\u043c\u0435\u043d\u044c", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertPrimaryMulti(Identifier.of("minecraft:calcite"), resolveItem("\u043a\u0430\u043b\u044c\u0446\u0438\u0442, \u0441\u043b\u0430\u043d\u0435\u0446", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertPrimaryMulti(Identifier.of("minecraft:dirt"), resolveItem("\u0417\u0435\u043c\u043b\u044f \u0438 \u0434\u0451\u0440\u043d", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertPrimaryMulti(Identifier.of("minecraft:ominous_trial_key"), resolveItem("\u0437\u043b\u043e\u0432\u0435\u0449\u0438\u0435 \u043a\u043b\u044e\u0447\u0438, \u043a\u043b\u044e\u0447\u0438", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
+        assertPrimaryMulti(Identifier.of("minecraft:gravel"), resolveItem("\u0433\u0440\u0430\u0432\u0438\u0439 \u0438 \u043a\u0440\u0435\u043c\u0435\u043d\u044c", "1 \u0430\u043b\u043c \u0437\u0430 1 \u0448\u0442", "", "Seller_01"));
     }
 
     @Test
@@ -421,12 +422,10 @@ class ShopPipelineRegressionTest {
         return itemAliasResolver.resolve(lines, priceParser.extract(lines));
     }
 
-    private static void assertMixed(ParsedItem parsedItem) {
+    private static void assertPrimaryMulti(Identifier expectedItemId, ParsedItem parsedItem) {
         assertNotNull(parsedItem);
-        assertEquals(Identifier.of("minecraft:bundle"), parsedItem.itemId());
-        assertEquals("pplshop:mixed_item", parsedItem.resolvedBucketId());
-        assertEquals("mixed_item", parsedItem.resolvedSubtypeKey());
-        assertEquals(ItemResolutionResultType.MIXED_ITEM, parsedItem.resultType());
+        assertEquals(expectedItemId, parsedItem.itemId());
+        assertTrue(parsedItem.resolutionTrace().fallbackReason().startsWith("multi-item-primary"));
     }
 
     private static void assertPotionSubtype(String itemLine, String subtypeKey) {

@@ -8,11 +8,14 @@ import com.google.gson.stream.JsonReader;
 import org.junit.jupiter.api.Test;
 import styy.pplShop.pplshop.client.normalize.NormalizationUtils;
 
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -83,8 +86,13 @@ class AliasConfigValidationTest {
     }
 
     @Test
-    void bundledAliasTargetsResolveToSyntacticallyKnownRuntimeItems() throws IOException {
-        ItemAliasConfigLoader loader = new ItemAliasConfigLoader(itemId -> itemId != null);
+    void bundledAliasTargetsResolveToKnownRuntimeItems() throws IOException {
+        Set<String> knownVanillaPaths = knownVanillaItemOrBlockPaths();
+        ItemAliasConfigLoader loader = new ItemAliasConfigLoader(itemId ->
+                itemId != null
+                        && "minecraft".equals(itemId.getNamespace())
+                        && knownVanillaPaths.contains(itemId.getPath())
+        );
         for (Path path : ALIAS_FILES) {
             ItemAliasConfigLoader.LoadResult result = loader.load(path, ParserRulesConfig.defaults(), new ItemAliasConfig(), false);
             assertFalse(result.parseFailed(), () -> result.parseErrorSummary());
@@ -131,6 +139,50 @@ class AliasConfigValidationTest {
             runtimeTargets.add(metadata.runtimeItemId() == null ? "" : metadata.runtimeItemId().toString());
         }
         return runtimeTargets.size() == 1;
+    }
+
+    private static Set<String> knownVanillaItemOrBlockPaths() throws IOException {
+        Set<String> paths = new HashSet<>();
+        paths.addAll(utf8Constants("net/minecraft/item/Items.class"));
+        paths.addAll(utf8Constants("net/minecraft/item/ItemKeys.class"));
+        paths.addAll(utf8Constants("net/minecraft/block/Blocks.class"));
+        paths.addAll(utf8Constants("net/minecraft/block/BlockKeys.class"));
+        paths.removeIf(path -> !path.matches("[a-z0-9_]+"));
+        assertFalse(paths.isEmpty(), "Could not read Minecraft item/block constants for alias validation");
+        return paths;
+    }
+
+    private static Set<String> utf8Constants(String classpathResource) throws IOException {
+        try (InputStream raw = AliasConfigValidationTest.class.getClassLoader().getResourceAsStream(classpathResource)) {
+            if (raw == null) {
+                throw new IOException("Missing classpath resource: " + classpathResource);
+            }
+            try (DataInputStream input = new DataInputStream(raw)) {
+                if (input.readInt() != 0xCAFEBABE) {
+                    throw new IOException("Invalid class file: " + classpathResource);
+                }
+                input.readUnsignedShort();
+                input.readUnsignedShort();
+                int constantPoolCount = input.readUnsignedShort();
+                Set<String> constants = new HashSet<>();
+                for (int index = 1; index < constantPoolCount; index++) {
+                    int tag = input.readUnsignedByte();
+                    switch (tag) {
+                        case 1 -> constants.add(input.readUTF());
+                        case 3, 4 -> input.skipBytes(4);
+                        case 5, 6 -> {
+                            input.skipBytes(8);
+                            index++;
+                        }
+                        case 7, 8, 16, 19, 20 -> input.skipBytes(2);
+                        case 9, 10, 11, 12, 17, 18 -> input.skipBytes(4);
+                        case 15 -> input.skipBytes(3);
+                        default -> throw new IOException("Unknown class constant tag " + tag + " in " + classpathResource);
+                    }
+                }
+                return constants;
+            }
+        }
     }
 
     private static void assertNoDuplicateJsonKeys(Path path) throws IOException {

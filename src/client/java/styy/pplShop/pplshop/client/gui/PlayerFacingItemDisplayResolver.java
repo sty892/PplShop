@@ -61,11 +61,6 @@ public final class PlayerFacingItemDisplayResolver {
         if ("generic_trim_template".equals(subtypeKey) || "minecraft:trim_smithing_template".equals(bucketId)) {
             return title("item.pplshop.category.armor_trim_template");
         }
-        if ("mixed_item".equals(subtypeKey) || "pplshop:mixed_item".equals(bucketId)) {
-            return entry.parsedItem().displayNameOverride().isBlank()
-                    ? title("item.pplshop.mixed_item")
-                    : entry.parsedItem().displayNameOverride();
-        }
         if (resolvedItemId != null && isPotionItem(resolvedItemId) && !subtypeKey.isBlank()) {
             return this.resolvePotionTitle(resolvedItemId, subtypeKey);
         }

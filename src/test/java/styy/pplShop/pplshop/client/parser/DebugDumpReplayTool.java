@@ -8,7 +8,6 @@ import styy.pplShop.pplshop.client.config.AliasTargetMappings;
 import styy.pplShop.pplshop.client.config.CurrencyAliasConfig;
 import styy.pplShop.pplshop.client.config.ItemAliasConfig;
 import styy.pplShop.pplshop.client.config.ParserRulesConfig;
-import styy.pplShop.pplshop.client.model.ItemResolutionResultType;
 import styy.pplShop.pplshop.client.model.ParsedItem;
 
 import java.io.IOException;
@@ -38,13 +37,13 @@ public final class DebugDumpReplayTool {
 
         List<DumpEntry> entries = readEntries(dumpPath);
         int resolvedByAlias = 0;
-        int resolvedByMixed = 0;
+        int resolvedByPrimaryMulti = 0;
         int stillConfirmedCustom = 0;
         int stillUnknown = 0;
         for (DumpEntry entry : entries) {
             ParsedItem parsedItem = resolver.resolveItemLines(entry.itemLines().isEmpty() ? List.of(entry.chosenCandidate()) : entry.itemLines());
-            if (parsedItem.resultType() == ItemResolutionResultType.MIXED_ITEM) {
-                resolvedByMixed++;
+            if (parsedItem.isResolved() && parsedItem.resolutionTrace().fallbackReason().startsWith("multi-item-primary")) {
+                resolvedByPrimaryMulti++;
             } else if (parsedItem.isResolved()) {
                 resolvedByAlias++;
             } else if (parsedItem.resolutionTrace().fallbackReason().startsWith("confirmed-unresolvable:")) {
@@ -53,7 +52,7 @@ public final class DebugDumpReplayTool {
                 stillUnknown++;
             }
         }
-        return new Summary(entries.size(), resolvedByAlias, resolvedByMixed, stillConfirmedCustom, stillUnknown);
+        return new Summary(entries.size(), resolvedByAlias, resolvedByPrimaryMulti, stillConfirmedCustom, stillUnknown);
     }
 
     private static List<DumpEntry> readEntries(Path dumpPath) throws IOException {
@@ -120,7 +119,7 @@ public final class DebugDumpReplayTool {
     private record DumpEntry(String chosenCandidate, List<String> itemLines) {
     }
 
-    record Summary(int beforeUnresolvedCount, int resolvedByAlias, int resolvedByMixed, int stillConfirmedCustom, int stillUnknown) {
+    record Summary(int beforeUnresolvedCount, int resolvedByAlias, int resolvedByPrimaryMulti, int stillConfirmedCustom, int stillUnknown) {
         int afterUnresolvedCount() {
             return this.stillConfirmedCustom + this.stillUnknown;
         }
@@ -131,7 +130,7 @@ public final class DebugDumpReplayTool {
                     + "beforeUnresolvedCount=" + this.beforeUnresolvedCount
                     + ", afterUnresolvedCount=" + this.afterUnresolvedCount()
                     + ", resolvedByAlias=" + this.resolvedByAlias
-                    + ", resolvedByMixed=" + this.resolvedByMixed
+                    + ", resolvedByPrimaryMulti=" + this.resolvedByPrimaryMulti
                     + ", stillConfirmedCustom=" + this.stillConfirmedCustom
                     + ", stillUnknown=" + this.stillUnknown
                     + '}';

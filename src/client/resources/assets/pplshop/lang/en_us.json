@@ -105,7 +105,6 @@
   "screen.pplshop.status_badge.age.hours": "%s h",
   "screen.pplshop.status_badge.age.days": "%s d",
   "item.pplshop.unknown": "Unknown item",
-  "item.pplshop.mixed_item": "Multiple items",
   "item.pplshop.category.concrete_powder": "Concrete powder",
   "item.pplshop.category.armor_trim_template": "Armor trim template",
   "item.pplshop.potion.type.drinkable": "Potion: %s",

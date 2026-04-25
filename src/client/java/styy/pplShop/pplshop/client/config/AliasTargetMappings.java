@@ -17,12 +17,15 @@ public final class AliasTargetMappings {
             Map.entry("minecraft:slowness_potion", new AliasTargetMetadata("minecraft:slowness_potion", Identifier.of("minecraft", "potion"), "slowness", "")),
             Map.entry("minecraft:water_breathing_potion", new AliasTargetMetadata("minecraft:water_breathing_potion", Identifier.of("minecraft", "potion"), "water_breathing", "")),
             Map.entry("minecraft:splash_fire_resistance_potion", new AliasTargetMetadata("minecraft:splash_fire_resistance_potion", Identifier.of("minecraft", "splash_potion"), "fire_resistance", "")),
-            Map.entry("pplshop:mixed_item", new AliasTargetMetadata("pplshop:mixed_item", Identifier.of("minecraft", "bundle"), "mixed_item", "")),
+            Map.entry("minecraft:blue_axolotl_bucket", new AliasTargetMetadata("minecraft:blue_axolotl_bucket", Identifier.of("minecraft", "axolotl_bucket"), "blue_axolotl", "")),
             Map.entry("minecraft:concrete_powder", new AliasTargetMetadata("minecraft:concrete_powder", Identifier.of("minecraft", "white_concrete_powder"), "generic_concrete_powder", "")),
             Map.entry("minecraft:concrete", new AliasTargetMetadata("minecraft:concrete", Identifier.of("minecraft", "white_concrete"), "generic_concrete", "")),
             Map.entry("minecraft:coral_block", new AliasTargetMetadata("minecraft:coral_block", Identifier.of("minecraft", "tube_coral_block"), "generic_coral_block", "")),
             Map.entry("minecraft:trim_smithing_template", new AliasTargetMetadata("minecraft:trim_smithing_template", Identifier.of("minecraft", "sentry_armor_trim_smithing_template"), "generic_trim_template", "")),
             Map.entry("minecraft:dye_bundle", new AliasTargetMetadata("minecraft:dye_bundle", Identifier.of("minecraft", "red_dye"), "generic_dye_bundle", "")),
+            Map.entry("minecraft:glazed_terracotta", new AliasTargetMetadata("minecraft:glazed_terracotta", Identifier.of("minecraft", "white_glazed_terracotta"), "generic_glazed_terracotta", "")),
+            Map.entry("minecraft:banner_pattern", new AliasTargetMetadata("minecraft:banner_pattern", Identifier.of("minecraft", "flow_banner_pattern"), "generic_banner_pattern", "")),
+            Map.entry("minecraft:decorated_pot_sherd", new AliasTargetMetadata("minecraft:decorated_pot_sherd", Identifier.of("minecraft", "angler_pottery_sherd"), "generic_pottery_sherd", "")),
             Map.entry("minecraft:leaves", new AliasTargetMetadata("minecraft:leaves", Identifier.of("minecraft", "oak_leaves"), "generic_leaves", "")),
             Map.entry("minecraft:warped_log", new AliasTargetMetadata("minecraft:warped_log", Identifier.of("minecraft", "warped_stem"), "warped_stem", ""))
     );
