@@ -229,7 +229,7 @@ public final class ShopSignClassifier {
                 return true;
             }
         }
-        for (String ignored : this.rules.ignored_sign_contains) {
+        for (String ignored : this.rules.combinedBlacklistedSignContains()) {
             String normalizedIgnored = NormalizationUtils.normalizeWithoutSorting(ignored, this.rules);
             if (!normalizedIgnored.isBlank() && normalized.contains(normalizedIgnored)) {
                 return true;

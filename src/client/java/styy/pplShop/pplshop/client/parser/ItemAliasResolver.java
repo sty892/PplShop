@@ -489,6 +489,12 @@ public final class ItemAliasResolver {
         if (normalized.startsWith("\u0444\u0444 ")) {
             return "confirmed-unresolvable:custom-title";
         }
+        for (String marker : this.rules.combinedBlacklistedSignContains()) {
+            String normalizedMarker = NormalizationUtils.normalizeWithoutSorting(marker, this.rules);
+            if (!normalizedMarker.isBlank() && normalized.contains(normalizedMarker)) {
+                return "confirmed-unresolvable:blacklisted-sign";
+            }
+        }
         return "";
     }
 

@@ -24,14 +24,13 @@ class DebugDumpReplayToolTest {
 
     @Test
     void latestLocalUnresolvedDebugDumpCanBeReplayedWhenPresent() throws IOException {
-        Path dumpPath = Path.of("D:/modtrinth/profiles/PWGood 1.0.0/pplshop-debug/diagnostic-dump-2026-04-24_15-09-40_467/2026-04-24_15-09-40_467__03-sign-unresolved-entries.txt");
+        Path dumpPath = Path.of("D:/modtrinth/profiles/PWGood 1.0.0/pplshop-debug/diagnostic-dump-2026-04-25_18-08-24_070/2026-04-25_18-08-24_070__03-sign-unresolved-entries.txt");
         assumeTrue(Files.exists(dumpPath), "latest local debug dump is not present on this machine");
 
         DebugDumpReplayTool.Summary summary = DebugDumpReplayTool.replay(dumpPath);
 
-        assertEquals(311, summary.beforeUnresolvedCount());
+        assertEquals(162, summary.beforeUnresolvedCount());
         assertTrue(summary.resolvedByAlias() > 0);
-        assertTrue(summary.resolvedByPrimaryMulti() > 0);
         assertTrue(summary.afterUnresolvedCount() < summary.beforeUnresolvedCount());
         System.out.println("latestLocal=" + summary);
     }

@@ -59,6 +59,13 @@ class ShopPipelineRegressionTest {
     }
 
     @Test
+    void jokeAndCustomDumpEntriesAreBlacklistedBeforeItemResolution() {
+        assertBlacklistedShop("\u0424\u0410\u041d\u0424\u0418\u041a \u041f\u0420\u041e \u0411\u0415\u0420\u0401\u0417\u0423", "1 \u0448\u0442 - 1 \u0430\u043b\u043c", "", "Seller_01");
+        assertBlacklistedShop("\u0410\u043d\u0430\u043b\u044c\u043d\u0430\u044f \u043f\u0440\u043e\u0431\u043a\u0430 Sulfur_ \u043b\u0438\u043c\u0438\u0442\u043a\u0430", "1 \u0448\u0442 - 1 \u0430\u0431", "", "Seller_01");
+        assertBlacklistedShop("\u041a\u043d\u0438\u0436\u043d\u044b\u0439 \u043f\u043e\u043d\u043e\u0441 \u0440\u0430\u0437\u043d\u044b\u0435 \u043a\u043d\u0438\u0436\u043a\u0438", "1 \u0441\u043b\u043e\u0442 - 2 \u0430\u043b\u043c", "", "Seller_01");
+    }
+
+    @Test
     void priceLineNeverBecomesItemCandidate() {
         Identifier resolved = resolveItemId("", "1 \u0430\u043b\u043c\u0430\u0437 - 3 \u0430\u043b\u043c", "", "Seller_01");
         assertNull(resolved);
@@ -436,6 +443,13 @@ class ShopPipelineRegressionTest {
 
     private static SignContainerRelation barrelRelation() {
         return new SignContainerRelation(true, Identifier.of("minecraft", "barrel"), new BlockPos(0, 63, 0), "nearby");
+    }
+
+    private static void assertBlacklistedShop(String line1, String line2, String line3, String line4) {
+        List<String> lines = List.of(line1, line2, line3, line4);
+        ShopSignClassifier.Classification classification = classifier.classify(lines, priceParser.extract(lines), barrelRelation());
+        assertEquals(ShopSignClassificationType.NOT_SHOP, classification.type());
+        assertEquals(ShopSignDiagnosticReason.NOT_SHOP_NO_ITEM_LINES, classification.reason());
     }
 
     private static ItemAliasConfig loadItemAliasConfig(ParserRulesConfig rules) throws IOException {

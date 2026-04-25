@@ -55,12 +55,12 @@ public final class ShopSignValidator {
     }
 
     private boolean shouldIgnore(List<String> lines) {
-        if (this.rules.ignored_sign_contains.isEmpty()) {
+        if (this.rules.combinedBlacklistedSignContains().isEmpty()) {
             return false;
         }
 
         String normalizedCombined = NormalizationUtils.normalizeWithoutSorting(String.join(" ", lines), this.rules);
-        for (String ignored : this.rules.ignored_sign_contains) {
+        for (String ignored : this.rules.combinedBlacklistedSignContains()) {
             String normalizedIgnored = NormalizationUtils.normalizeWithoutSorting(ignored, this.rules);
             if (!normalizedIgnored.isBlank() && normalizedCombined.contains(normalizedIgnored)) {
                 return true;
