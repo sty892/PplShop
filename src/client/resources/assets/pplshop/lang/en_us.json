@@ -122,7 +122,7 @@
   "item.pplshop.potion.effect.slowness": "slowness",
   "item.pplshop.potion.effect.water_breathing": "water breathing",
   "message.pplshop.refresh_trigger.gui_button": "button in shop list",
-  "config.pplshop.discord.tooltip.issue": "Found a bug? Message me.",
-  "config.pplshop.discord.tooltip.copy": "Click to copy Discord.",
+  "config.pplshop.discord.tooltip.issue": "§cFound a bug?",
+  "config.pplshop.discord.tooltip.copy": "§7Click to copy",
   "config.pplshop.discord.tooltip.copied": "Copied to clipboard."
 }
