@@ -1,6 +1,7 @@
 package styy.pplShop.pplshop.client.gui;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -33,6 +34,9 @@ import java.util.function.Supplier;
 
 public final class ShopBrowserScreen extends Screen {
     private static final Logger LOGGER = LoggerFactory.getLogger("PPLShop");
+    private static final Identifier DISCORD_TEXTURE = Identifier.of("pplshop", "textures/gui/discord_support.png");
+    private static final int DISCORD_TEXTURE_SIZE = 1080;
+    private static final String DISCORD_CONTACT = "styy8";
     private static final int ENTRY_WIDTH = 56;
     private static final int ENTRY_HEIGHT = 38;
     private static final int ENTRY_GAP = 4;
@@ -77,6 +81,7 @@ public final class ShopBrowserScreen extends Screen {
     private int scrollbarTrackHeight;
     private int scrollbarThumbY;
     private int scrollbarThumbHeight;
+    private long discordCopiedAt;
 
     public ShopBrowserScreen(
             ShopCache shopCache,
@@ -221,6 +226,7 @@ public final class ShopBrowserScreen extends Screen {
         context.drawCenteredTextWithShadow(this.textRenderer, Text.translatable("screen.pplshop.found", this.filteredEntries.size()), this.width / 2, activeLayout.foundY(), 0xFFCCCCCC);
         this.renderSnapshotSummary(context);
         this.statusBadge.render(context, this.currentRefreshState());
+        this.renderDiscordSupport(context);
 
         for (ShopEntryWidget widget : this.entryWidgets) {
             if (widget.model() != null && widget.isMouseOver(mouseX, mouseY)) {
@@ -232,7 +238,9 @@ public final class ShopBrowserScreen extends Screen {
 
         this.renderScrollBar(context);
 
-        if (this.statusBadge.isMouseOver(mouseX, mouseY)) {
+        if (this.isDiscordSupportHovered(mouseX, mouseY)) {
+            this.renderDiscordSupportTooltip(context, mouseX, mouseY);
+        } else if (this.statusBadge.isMouseOver(mouseX, mouseY)) {
             this.statusBadge.renderTooltip(context, this.textRenderer, this.currentRefreshState(), mouseX, mouseY);
         } else if (this.hoveredModel != null) {
             context.drawTooltip(this.textRenderer, this.buildTooltip(this.hoveredModel), mouseX, mouseY);
@@ -266,6 +274,11 @@ public final class ShopBrowserScreen extends Screen {
             } else {
                 this.updateScrollFromThumbTop((int) mouseY - (this.scrollbarThumbHeight / 2));
             }
+            return true;
+        }
+        if (button == 0 && this.isDiscordSupportHovered(mouseX, mouseY)) {
+            MinecraftClient.getInstance().keyboard.setClipboard(DISCORD_CONTACT);
+            this.discordCopiedAt = System.currentTimeMillis();
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
@@ -651,6 +664,39 @@ public final class ShopBrowserScreen extends Screen {
                     0xFFFFD2A8
             );
         }
+    }
+
+    private void renderDiscordSupport(DrawContext context) {
+        ShopBrowserLayout.Bounds bounds = this.activeLayout().discordSupportBounds();
+        context.drawTexture(
+                RenderPipelines.GUI_TEXTURED,
+                DISCORD_TEXTURE,
+                bounds.x(),
+                bounds.y(),
+                0.0F,
+                0.0F,
+                bounds.width(),
+                bounds.height(),
+                DISCORD_TEXTURE_SIZE,
+                DISCORD_TEXTURE_SIZE,
+                DISCORD_TEXTURE_SIZE,
+                DISCORD_TEXTURE_SIZE
+        );
+    }
+
+    private boolean isDiscordSupportHovered(double mouseX, double mouseY) {
+        return this.activeLayout().discordSupportBounds().contains(mouseX, mouseY);
+    }
+
+    private void renderDiscordSupportTooltip(DrawContext context, int mouseX, int mouseY) {
+        List<Text> tooltip = new ArrayList<>();
+        tooltip.add(Text.translatable("config.pplshop.discord.tooltip.issue"));
+        tooltip.add(Text.translatable("config.pplshop.discord.tooltip.copy"));
+        tooltip.add(Text.literal(DISCORD_CONTACT));
+        if (System.currentTimeMillis() - this.discordCopiedAt < 1800L) {
+            tooltip.add(Text.translatable("config.pplshop.discord.tooltip.copied"));
+        }
+        context.drawTooltip(this.textRenderer, tooltip, mouseX, mouseY);
     }
 
     private void drawBanner(DrawContext context, int y, Text text, int background, int color) {

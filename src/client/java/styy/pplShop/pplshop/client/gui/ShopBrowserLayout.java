@@ -57,8 +57,9 @@ public final class ShopBrowserLayout {
         Bounds sortBounds = new Bounds(sortX, barY, Math.max(0, widths.sortWidth()), CONTROL_HEIGHT);
         Bounds clearBounds = new Bounds(clearX, barY, widths.clearWidth(), CONTROL_HEIGHT);
         Bounds statusBadgeBounds = new Bounds(screenWidth - OUTER_PADDING - STATUS_BADGE_SIZE - 8, screenHeight - OUTER_PADDING - STATUS_BADGE_SIZE, STATUS_BADGE_SIZE, STATUS_BADGE_SIZE);
+        Bounds discordSupportBounds = new Bounds(statusBadgeBounds.x() - CONTROL_GAP - STATUS_BADGE_SIZE, statusBadgeBounds.y(), STATUS_BADGE_SIZE, STATUS_BADGE_SIZE);
 
-        return new Layout(refreshBounds, searchBounds, sortBounds, clearBounds, statusBadgeBounds, TITLE_Y, FOUND_Y, LOW_ENTRY_HINT_Y, GRID_TOP, GRID_BOTTOM_PADDING);
+        return new Layout(refreshBounds, searchBounds, sortBounds, clearBounds, statusBadgeBounds, discordSupportBounds, TITLE_Y, FOUND_Y, LOW_ENTRY_HINT_Y, GRID_TOP, GRID_BOTTOM_PADDING);
     }
 
     private static int preferredWidth(TextRenderer textRenderer, Text label, int minWidth, int maxWidth) {
@@ -101,6 +102,7 @@ public final class ShopBrowserLayout {
             Bounds sortBounds,
             Bounds clearBounds,
             Bounds statusBadgeBounds,
+            Bounds discordSupportBounds,
             int titleY,
             int foundY,
             int lowEntryHintY,

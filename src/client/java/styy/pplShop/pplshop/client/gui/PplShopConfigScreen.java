@@ -1,14 +1,12 @@
 package styy.pplShop.pplshop.client.gui;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import styy.pplShop.pplshop.client.PplshopClient;
 import styy.pplShop.pplshop.client.config.AutoRefreshMode;
 import styy.pplShop.pplshop.client.config.PplShopConfigManager;
@@ -18,10 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class PplShopConfigScreen extends Screen {
-    private static final Identifier DISCORD_TEXTURE = Identifier.of("pplshop", "textures/gui/discord_support.png");
-    private static final int DISCORD_ICON_SIZE = 24;
-    private static final String DISCORD_CONTACT = "styy8";
-
     private final Screen parent;
     private final PplShopConfigManager configManager;
     private final RefreshUxConfig workingCopy;
@@ -29,9 +23,6 @@ public final class PplShopConfigScreen extends Screen {
 
     private TextFieldWidget minimumExpectedEntriesField;
     private TextFieldWidget refreshBudgetPerTickField;
-    private int discordIconX;
-    private int discordIconY;
-    private long discordCopiedAt;
 
     public PplShopConfigScreen(Screen parent, PplShopConfigManager configManager) {
         super(Text.translatable("config.pplshop.title"));
@@ -99,17 +90,6 @@ public final class PplShopConfigScreen extends Screen {
         }
 
         super.render(context, mouseX, mouseY, delta);
-        this.renderDiscordSupport(context, mouseX, mouseY);
-    }
-
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && this.isDiscordSupportHovered(mouseX, mouseY)) {
-            MinecraftClient.getInstance().keyboard.setClipboard(DISCORD_CONTACT);
-            this.discordCopiedAt = System.currentTimeMillis();
-            return true;
-        }
-        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     private int addBooleanRow(int x, int controlX, int labelWidth, int y, Text label, Text tooltip, Runnable toggleAction, BooleanSupplier valueSupplier) {
@@ -172,40 +152,6 @@ public final class PplShopConfigScreen extends Screen {
         } catch (Exception exception) {
             return fallback;
         }
-    }
-
-    private void renderDiscordSupport(DrawContext context, int mouseX, int mouseY) {
-        this.discordIconX = this.width - DISCORD_ICON_SIZE - 10;
-        this.discordIconY = this.height - DISCORD_ICON_SIZE - 10;
-        context.drawTexture(
-                RenderPipelines.GUI_TEXTURED,
-                DISCORD_TEXTURE,
-                this.discordIconX,
-                this.discordIconY,
-                0.0F,
-                0.0F,
-                DISCORD_ICON_SIZE,
-                DISCORD_ICON_SIZE,
-                DISCORD_ICON_SIZE,
-                DISCORD_ICON_SIZE
-        );
-        if (this.isDiscordSupportHovered(mouseX, mouseY)) {
-            List<Text> tooltip = new ArrayList<>();
-            tooltip.add(Text.translatable("config.pplshop.discord.tooltip.issue"));
-            tooltip.add(Text.translatable("config.pplshop.discord.tooltip.copy"));
-            tooltip.add(Text.literal(DISCORD_CONTACT));
-            if (System.currentTimeMillis() - this.discordCopiedAt < 1800L) {
-                tooltip.add(Text.translatable("config.pplshop.discord.tooltip.copied"));
-            }
-            context.drawTooltip(this.textRenderer, tooltip, mouseX, mouseY);
-        }
-    }
-
-    private boolean isDiscordSupportHovered(double mouseX, double mouseY) {
-        return mouseX >= this.discordIconX
-                && mouseX <= this.discordIconX + DISCORD_ICON_SIZE
-                && mouseY >= this.discordIconY
-                && mouseY <= this.discordIconY + DISCORD_ICON_SIZE;
     }
 
     private static Text toggleLabel(boolean value) {

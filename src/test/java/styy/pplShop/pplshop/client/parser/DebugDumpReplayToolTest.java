@@ -13,7 +13,10 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 class DebugDumpReplayToolTest {
     @Test
     void unresolvedDebugDumpCanBeReplayedWithoutMinecraftClient() throws IOException {
-        DebugDumpReplayTool.Summary summary = DebugDumpReplayTool.replay(Path.of("2026-04-15_14-03-03_415__03-sign-unresolved-entries.txt"));
+        Path dumpPath = Path.of("2026-04-15_14-03-03_415__03-sign-unresolved-entries.txt");
+        assumeTrue(Files.exists(dumpPath), "baseline debug dump is not present in this checkout");
+
+        DebugDumpReplayTool.Summary summary = DebugDumpReplayTool.replay(dumpPath);
 
         assertEquals(333, summary.beforeUnresolvedCount());
         assertTrue(summary.resolvedByAlias() > 0);
