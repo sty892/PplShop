@@ -4,10 +4,12 @@
   "version": "${version}",
   "name": "PPLShop",
   "description": "Client-side shop browser for sign-based stores.",
-  "authors": [],
+  "authors": [
+    "styy_"
+  ],
   "icon": "icon.png",
   "contact": {},
-  "license": "All-Rights-Reserved",
+  "license": "GPL-3.0-only",
   "environment": "client",
   "entrypoints": {
     "fabric-datagen": [
