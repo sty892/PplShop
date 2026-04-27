@@ -14,7 +14,8 @@ public final class ShopBrowserLayout {
     private static final int LOW_ENTRY_HINT_Y = 62;
     private static final int GRID_TOP = 80;
     private static final int GRID_BOTTOM_PADDING = 10;
-    private static final int STATUS_BADGE_SIZE = 14;
+    private static final int STATUS_BADGE_SIZE = 16;
+    private static final int STATUS_BADGE_BOTTOM_PADDING = 22;
 
     private static final int REFRESH_MIN_WIDTH = 82;
     private static final int REFRESH_MAX_WIDTH = 126;
@@ -56,7 +57,7 @@ public final class ShopBrowserLayout {
         Bounds searchBounds = new Bounds(searchX, barY, Math.max(0, searchWidth), CONTROL_HEIGHT);
         Bounds sortBounds = new Bounds(sortX, barY, Math.max(0, widths.sortWidth()), CONTROL_HEIGHT);
         Bounds clearBounds = new Bounds(clearX, barY, widths.clearWidth(), CONTROL_HEIGHT);
-        Bounds statusBadgeBounds = new Bounds(screenWidth - OUTER_PADDING - STATUS_BADGE_SIZE - 8, screenHeight - OUTER_PADDING - STATUS_BADGE_SIZE, STATUS_BADGE_SIZE, STATUS_BADGE_SIZE);
+        Bounds statusBadgeBounds = new Bounds(screenWidth - OUTER_PADDING - STATUS_BADGE_SIZE - 8, screenHeight - STATUS_BADGE_BOTTOM_PADDING - STATUS_BADGE_SIZE, STATUS_BADGE_SIZE, STATUS_BADGE_SIZE);
         Bounds discordSupportBounds = new Bounds(statusBadgeBounds.x() - CONTROL_GAP - STATUS_BADGE_SIZE, statusBadgeBounds.y(), STATUS_BADGE_SIZE, STATUS_BADGE_SIZE);
 
         return new Layout(refreshBounds, searchBounds, sortBounds, clearBounds, statusBadgeBounds, discordSupportBounds, TITLE_Y, FOUND_Y, LOW_ENTRY_HINT_Y, GRID_TOP, GRID_BOTTOM_PADDING);

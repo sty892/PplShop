@@ -35,7 +35,7 @@ import java.util.function.Supplier;
 public final class ShopBrowserScreen extends Screen {
     private static final Logger LOGGER = LoggerFactory.getLogger("PPLShop");
     private static final Identifier DISCORD_TEXTURE = Identifier.of("pplshop", "textures/gui/discord_support.png");
-    private static final int DISCORD_TEXTURE_SIZE = 1080;
+    private static final int DISCORD_TEXTURE_SIZE = 32;
     private static final String DISCORD_CONTACT = "styy8";
     private static final int ENTRY_WIDTH = 56;
     private static final int ENTRY_HEIGHT = 38;
@@ -668,6 +668,9 @@ public final class ShopBrowserScreen extends Screen {
 
     private void renderDiscordSupport(DrawContext context) {
         ShopBrowserLayout.Bounds bounds = this.activeLayout().discordSupportBounds();
+        context.fill(bounds.x() - 1, bounds.y() - 1, bounds.x() + bounds.width() + 1, bounds.y() + bounds.height() + 1, 0xE05865F2);
+        context.drawBorder(bounds.x() - 2, bounds.y() - 2, bounds.width() + 4, bounds.height() + 4, 0xFFE8EAFF);
+        context.drawBorder(bounds.x() - 1, bounds.y() - 1, bounds.width() + 2, bounds.height() + 2, 0xFF3742B8);
         context.drawTexture(
                 RenderPipelines.GUI_TEXTURED,
                 DISCORD_TEXTURE,
@@ -692,7 +695,6 @@ public final class ShopBrowserScreen extends Screen {
         List<Text> tooltip = new ArrayList<>();
         tooltip.add(Text.translatable("config.pplshop.discord.tooltip.issue"));
         tooltip.add(Text.translatable("config.pplshop.discord.tooltip.copy"));
-        tooltip.add(Text.literal(DISCORD_CONTACT));
         if (System.currentTimeMillis() - this.discordCopiedAt < 1800L) {
             tooltip.add(Text.translatable("config.pplshop.discord.tooltip.copied"));
         }
