@@ -668,18 +668,21 @@ public final class ShopBrowserScreen extends Screen {
 
     private void renderDiscordSupport(DrawContext context) {
         ShopBrowserLayout.Bounds bounds = this.activeLayout().discordSupportBounds();
-        context.fill(bounds.x() - 1, bounds.y() - 1, bounds.x() + bounds.width() + 1, bounds.y() + bounds.height() + 1, 0xE05865F2);
+        int iconInset = 2;
+        context.fill(bounds.x() - 2, bounds.y() - 2, bounds.x() + bounds.width() + 2, bounds.y() + bounds.height() + 2, 0xCC20254F);
+        context.fill(bounds.x() - 1, bounds.y() - 1, bounds.x() + bounds.width() + 1, bounds.y() + bounds.height() + 1, 0xFF5865F2);
+        context.fill(bounds.x(), bounds.y(), bounds.x() + bounds.width(), bounds.y() + bounds.height(), 0xFF6D78F7);
         context.drawBorder(bounds.x() - 2, bounds.y() - 2, bounds.width() + 4, bounds.height() + 4, 0xFFE8EAFF);
         context.drawBorder(bounds.x() - 1, bounds.y() - 1, bounds.width() + 2, bounds.height() + 2, 0xFF3742B8);
         context.drawTexture(
                 RenderPipelines.GUI_TEXTURED,
                 DISCORD_TEXTURE,
-                bounds.x(),
-                bounds.y(),
+                bounds.x() + iconInset,
+                bounds.y() + iconInset,
                 0.0F,
                 0.0F,
-                bounds.width(),
-                bounds.height(),
+                bounds.width() - (iconInset * 2),
+                bounds.height() - (iconInset * 2),
                 DISCORD_TEXTURE_SIZE,
                 DISCORD_TEXTURE_SIZE,
                 DISCORD_TEXTURE_SIZE,
