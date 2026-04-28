@@ -40,6 +40,9 @@ public final class ShopBrowserScreen extends Screen {
     private static final int ENTRY_WIDTH = 56;
     private static final int ENTRY_HEIGHT = 38;
     private static final int ENTRY_GAP = 4;
+    private static final int RAW_TEXT_TOGGLE_WIDTH = 236;
+    private static final int RAW_TEXT_TOGGLE_HEIGHT = 20;
+    private static final int RAW_TEXT_TOGGLE_BOTTOM_MARGIN = 8;
     private static final long SEARCH_DEBOUNCE_MS = 150L;
 
     private final ShopCache shopCache;
@@ -60,10 +63,12 @@ public final class ShopBrowserScreen extends Screen {
     private ButtonWidget clearHighlightsButton;
     private ButtonWidget sortModeButton;
     private ButtonWidget refreshButton;
+    private ButtonWidget rawTextToggleButton;
     private ShopBrowserLayout.Layout layout;
     private List<IndexedEntry> indexedEntries = List.of();
     private List<IndexedEntry> filteredIndexedEntries = List.of();
     private List<ShopSignEntry> filteredEntries = List.of();
+    private List<IndexedEntry> rawTextMatchedEntries = List.of();
     private Map<Identifier, PriceColorResolver.ItemPriceStats> itemPriceStats = Map.of();
     private ShopSignEntry hoveredEntry;
     private ShopEntryWidget.Model hoveredModel;
@@ -75,6 +80,7 @@ public final class ShopBrowserScreen extends Screen {
     private String appliedNormalizedQuery = "";
     private long lastQueryChangedAt;
     private boolean scrollbarDragging;
+    private boolean rawTextMode;
     private int scrollbarDragOffsetY;
     private int scrollbarTrackX;
     private int scrollbarTrackY;
@@ -147,6 +153,13 @@ public final class ShopBrowserScreen extends Screen {
                 .dimensions(this.layout.clearBounds().x(), this.layout.clearBounds().y(), this.layout.clearBounds().width(), this.layout.clearBounds().height())
                 .build();
         this.addDrawableChild(this.clearHighlightsButton);
+
+        this.rawTextToggleButton = ButtonWidget.builder(Text.translatable("screen.pplshop.search.show_sign_matches", 0), button -> this.toggleRawTextMode())
+                .dimensions(0, 0, RAW_TEXT_TOGGLE_WIDTH, RAW_TEXT_TOGGLE_HEIGHT)
+                .build();
+        this.rawTextToggleButton.visible = false;
+        this.rawTextToggleButton.active = false;
+        this.addDrawableChild(this.rawTextToggleButton);
 
         this.pendingNormalizedQuery = this.normalizeQuery(existingSearch);
         this.appliedNormalizedQuery = this.pendingNormalizedQuery;
@@ -306,6 +319,7 @@ public final class ShopBrowserScreen extends Screen {
         this.sessionState.setSearchText(value);
         this.pendingNormalizedQuery = this.normalizeQuery(value);
         this.lastQueryChangedAt = Util.getMeasuringTimeMs();
+        this.rawTextMode = false;
         this.scrollRowOffset = 0;
         this.sessionState.setScrollRowOffset(0);
     }
@@ -324,7 +338,7 @@ public final class ShopBrowserScreen extends Screen {
         List<ShopSignEntry> source = this.shopCache.snapshot();
         List<IndexedEntry> rebuilt = new ArrayList<>(source.size());
         for (ShopSignEntry entry : source) {
-            rebuilt.add(new IndexedEntry(entry, this.buildSearchBlob(entry), this.itemThemeResolver.resolveThemes(entry)));
+            rebuilt.add(new IndexedEntry(entry, this.buildSearchBlob(entry), this.buildRawTextBlob(entry), this.itemThemeResolver.resolveThemes(entry)));
         }
         this.itemPriceStats = PriceColorResolver.buildStats(source);
         this.indexedEntries = List.copyOf(rebuilt);
@@ -333,18 +347,23 @@ public final class ShopBrowserScreen extends Screen {
     }
 
     private void applyFilter(boolean scrollToTop) {
-        Set<ShopTheme> previousMatchedThemes = this.themeKeywordSearch.resolve(this.appliedNormalizedQuery);
         String nextQuery = this.pendingNormalizedQuery;
         Set<ShopTheme> matchedThemes = this.themeKeywordSearch.resolve(nextQuery);
-        List<IndexedEntry> filterSource = this.canFilterIncrementally(this.appliedNormalizedQuery, previousMatchedThemes, nextQuery, matchedThemes)
-                ? this.filteredIndexedEntries
-                : this.indexedEntries;
+        List<IndexedEntry> filterSource = this.indexedEntries;
 
         this.appliedNormalizedQuery = nextQuery;
-        this.filteredIndexedEntries = filterSource.stream()
+        List<IndexedEntry> smartMatches = filterSource.stream()
                 .filter(indexed -> this.matchesQuery(indexed, this.appliedNormalizedQuery, matchedThemes))
                 .sorted((left, right) -> ShopEntryComparator.forMode(this.sortMode).compare(left.entry(), right.entry()))
                 .toList();
+        this.rawTextMatchedEntries = this.indexedEntries.stream()
+                .filter(indexed -> ShopSearchMatcher.matchesRawTextQuery(indexed.rawTextBlob(), this.appliedNormalizedQuery))
+                .sorted((left, right) -> ShopEntryComparator.forMode(this.sortMode).compare(left.entry(), right.entry()))
+                .toList();
+        if (this.rawTextMode && this.rawTextMatchedEntries.isEmpty()) {
+            this.rawTextMode = false;
+        }
+        this.filteredIndexedEntries = this.rawTextMode ? this.rawTextMatchedEntries : smartMatches;
         this.filteredEntries = this.filteredIndexedEntries.stream()
                 .map(IndexedEntry::entry)
                 .toList();
@@ -394,6 +413,7 @@ public final class ShopBrowserScreen extends Screen {
             widget.setPositionAndSize(x, y, ENTRY_WIDTH, ENTRY_HEIGHT);
             widget.setModel(entryIndex < this.filteredEntries.size() ? this.createModel(this.filteredEntries.get(entryIndex)) : null, this::handleEntryClick);
         }
+        this.updateRawTextToggleButton();
     }
 
     private void clearVisibleWidgets() {
@@ -445,35 +465,7 @@ public final class ShopBrowserScreen extends Screen {
     }
 
     private boolean matchesQuery(IndexedEntry indexedEntry, String normalizedQuery, Set<ShopTheme> matchedThemes) {
-        if (normalizedQuery == null || normalizedQuery.isBlank()) {
-            return true;
-        }
-        return indexedEntry.searchBlob().contains(normalizedQuery) || this.matchesThemeQuery(indexedEntry, matchedThemes);
-    }
-
-    private boolean matchesThemeQuery(IndexedEntry indexedEntry, Set<ShopTheme> matchedThemes) {
-        if (matchedThemes == null || matchedThemes.isEmpty()) {
-            return false;
-        }
-        for (ShopTheme theme : matchedThemes) {
-            if (indexedEntry.themes().contains(theme)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean canFilterIncrementally(String previousQuery, Set<ShopTheme> previousThemes, String nextQuery, Set<ShopTheme> nextThemes) {
-        if (!previousThemes.equals(nextThemes)) {
-            return false;
-        }
-        if (previousQuery == null || previousQuery.isBlank()) {
-            return false;
-        }
-        if (nextQuery == null || nextQuery.isBlank()) {
-            return false;
-        }
-        return nextQuery.startsWith(previousQuery);
+        return ShopSearchMatcher.matchesSmartQuery(indexedEntry.searchBlob(), indexedEntry.themes(), normalizedQuery, matchedThemes);
     }
 
     private String buildSearchBlob(ShopSignEntry entry) {
@@ -519,6 +511,19 @@ public final class ShopBrowserScreen extends Screen {
         return String.join("\n", normalizedTerms);
     }
 
+    private String buildRawTextBlob(ShopSignEntry entry) {
+        LinkedHashSet<String> normalizedTerms = new LinkedHashSet<>();
+        normalizedTerms.add(NormalizationUtils.normalizeWithoutSorting(entry.rawCombinedText(), this.parserRulesConfig));
+        normalizedTerms.add(NormalizationUtils.normalizeWithoutSorting(entry.parsedItem().rawText(), this.parserRulesConfig));
+        normalizedTerms.add(NormalizationUtils.normalizeWithoutSorting(entry.parsedPrice().rawText(), this.parserRulesConfig));
+        for (String line : entry.snapshot().lines()) {
+            normalizedTerms.add(NormalizationUtils.normalizeWithoutSorting(line, this.parserRulesConfig));
+        }
+        return normalizedTerms.stream()
+                .filter(term -> term != null && !term.isBlank())
+                .collect(java.util.stream.Collectors.joining("\n"));
+    }
+
     private List<Text> buildTooltip(ShopEntryWidget.Model model) {
         ShopSignEntry entry = model.entry();
         List<Text> tooltip = new ArrayList<>();
@@ -537,7 +542,7 @@ public final class ShopBrowserScreen extends Screen {
 
     private int getVisibleRowCount() {
         ShopBrowserLayout.Layout activeLayout = this.activeLayout();
-        int gridBottom = this.height - activeLayout.gridBottomPadding();
+        int gridBottom = this.height - activeLayout.gridBottomPadding() - this.footerReservedSpace();
         int gridHeight = Math.max(ENTRY_HEIGHT, gridBottom - activeLayout.gridTop());
         return Math.max(1, gridHeight / (ENTRY_HEIGHT + ENTRY_GAP));
     }
@@ -602,7 +607,7 @@ public final class ShopBrowserScreen extends Screen {
         ShopBrowserLayout.Layout activeLayout = this.activeLayout();
         this.scrollbarTrackX = this.width - 10;
         this.scrollbarTrackY = activeLayout.gridTop();
-        this.scrollbarTrackHeight = Math.max(16, this.height - activeLayout.gridBottomPadding() - activeLayout.gridTop());
+        this.scrollbarTrackHeight = Math.max(16, this.height - activeLayout.gridBottomPadding() - this.footerReservedSpace() - activeLayout.gridTop());
         int totalRows = Math.max(1, (int) Math.ceil(this.filteredEntries.size() / (double) this.getColumnCount()));
         int visibleRows = this.getVisibleRowCount();
         this.scrollbarThumbHeight = Math.max(12, (int) (this.scrollbarTrackHeight * (visibleRows / (double) totalRows)));
@@ -755,6 +760,48 @@ public final class ShopBrowserScreen extends Screen {
         return this.refreshUxConfig.preferredPriceBasis == null ? ShopPriceSortBasis.PER_UNIT : this.refreshUxConfig.preferredPriceBasis;
     }
 
-    private record IndexedEntry(ShopSignEntry entry, String searchBlob, Set<ShopTheme> themes) {
+    private void toggleRawTextMode() {
+        if (!this.shouldShowRawTextToggleButton()) {
+            return;
+        }
+        this.rawTextMode = !this.rawTextMode;
+        this.applyFilter(true);
+    }
+
+    private void updateRawTextToggleButton() {
+        if (this.rawTextToggleButton == null) {
+            return;
+        }
+        boolean visible = this.shouldShowRawTextToggleButton();
+        this.rawTextToggleButton.visible = visible;
+        this.rawTextToggleButton.active = visible;
+        if (!visible) {
+            return;
+        }
+        this.rawTextToggleButton.setDimensionsAndPosition(
+                (this.width - RAW_TEXT_TOGGLE_WIDTH) / 2,
+                this.height - RAW_TEXT_TOGGLE_BOTTOM_MARGIN - RAW_TEXT_TOGGLE_HEIGHT,
+                RAW_TEXT_TOGGLE_WIDTH,
+                RAW_TEXT_TOGGLE_HEIGHT
+        );
+        this.rawTextToggleButton.setMessage(this.rawTextMode
+                ? Text.translatable("screen.pplshop.search.back_to_smart")
+                : Text.translatable("screen.pplshop.search.show_sign_matches", this.rawTextMatchedEntries.size()));
+    }
+
+    private boolean shouldShowRawTextToggleButton() {
+        return ShopSearchMatcher.shouldShowRawTextToggle(
+                this.appliedNormalizedQuery,
+                this.rawTextMode,
+                this.filteredIndexedEntries == null ? 0 : (this.rawTextMode ? this.rawTextMatchedEntries.size() : this.filteredIndexedEntries.size()),
+                this.rawTextMatchedEntries.size()
+        );
+    }
+
+    private int footerReservedSpace() {
+        return this.shouldShowRawTextToggleButton() ? RAW_TEXT_TOGGLE_HEIGHT + RAW_TEXT_TOGGLE_BOTTOM_MARGIN + 4 : 0;
+    }
+
+    private record IndexedEntry(ShopSignEntry entry, String searchBlob, String rawTextBlob, Set<ShopTheme> themes) {
     }
 }

@@ -37,6 +37,8 @@
   "screen.pplshop.loading": "Loading...",
   "screen.pplshop.loading_chunks": "Chunks: %s",
   "screen.pplshop.loading_found": "Signs found: %s",
+  "screen.pplshop.search.show_sign_matches": "Show all sign matches (%s)",
+  "screen.pplshop.search.back_to_smart": "Back to smart search",
   "screen.pplshop.status.fresh": "List is fresh ? updated %s ago",
   "screen.pplshop.status.stale": "List is stale ? updated %s ago",
   "screen.pplshop.status.refreshing": "Searching signs ? started by: %s",

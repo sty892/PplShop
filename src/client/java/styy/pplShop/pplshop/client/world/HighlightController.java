@@ -1,6 +1,7 @@
 package styy.pplShop.pplshop.client.world;
 
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -14,12 +15,14 @@ import java.util.Objects;
 
 public final class HighlightController {
     private static final boolean EXPERIMENTAL_GLOW_ENABLED = Boolean.getBoolean("pplshop.experimentalGlowHighlight");
+    private static final boolean IRIS_INSTALLED = FabricLoader.getInstance().isModLoaded("iris");
     private final ActiveHighlightState activeState = new ActiveHighlightState();
     private final HighlightCleanupHooks cleanupHooks = new HighlightCleanupHooks();
     private final BarrelInteractionResolver interactionResolver = new BarrelInteractionResolver();
     private final HighlightBackend basicBackend = new BasicOutlineHighlightBackend();
     private final HighlightBackend experimentalBackend = new ExperimentalGlowHighlightBackend();
-    private HighlightBackend activeBackend = EXPERIMENTAL_GLOW_ENABLED ? this.experimentalBackend : this.basicBackend;
+    private final HighlightBackend shaderSafeBackend = new ShaderSafeFillHighlightBackend();
+    private HighlightBackend activeBackend = this.selectInitialBackend();
     private double autoClearDistance = 3.0D;
 
     public void setAutoClearDistance(double autoClearDistance) {
@@ -52,6 +55,7 @@ public final class HighlightController {
         this.activeState.clear();
         this.basicBackend.clear();
         this.experimentalBackend.clear();
+        this.shaderSafeBackend.clear();
     }
 
     public void tick(MinecraftClient client) {
@@ -100,5 +104,15 @@ public final class HighlightController {
 
     public ActiveHighlightState.HighlightDebugSnapshot debugSnapshot() {
         return this.activeState.debugSnapshot();
+    }
+
+    private HighlightBackend selectInitialBackend() {
+        if (IRIS_INSTALLED && this.shaderSafeBackend.isAvailable()) {
+            return this.shaderSafeBackend;
+        }
+        if (EXPERIMENTAL_GLOW_ENABLED && this.experimentalBackend.isAvailable()) {
+            return this.experimentalBackend;
+        }
+        return this.basicBackend;
     }
 }
