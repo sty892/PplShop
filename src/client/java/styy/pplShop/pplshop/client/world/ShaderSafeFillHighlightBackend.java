@@ -31,7 +31,7 @@ public final class ShaderSafeFillHighlightBackend implements HighlightBackend {
         Vec3d cameraPos = context.camera().getPos();
         MatrixStack matrices = context.matrixStack();
         VertexConsumer fillConsumer = context.consumers().getBuffer(RenderLayer.getDebugFilledBox());
-        VertexConsumer lineConsumer = context.consumers().getBuffer(RenderLayer.getLines());
+        VertexConsumer lineConsumer = context.consumers().getBuffer(BasicOutlineHighlightBackend.highlightLayer());
 
         for (Map.Entry<String, ActiveHighlightState.HighlightedTarget> entry : HighlightGeometry.uniqueTargets(state).entrySet()) {
             ActiveHighlightState.HighlightedTarget target = entry.getValue();

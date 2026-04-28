@@ -20,14 +20,8 @@ final class ShopSearchMatcher {
                 && rawTextBlob.contains(normalizedQuery);
     }
 
-    static boolean shouldShowRawTextToggle(String normalizedQuery, boolean rawTextMode, int smartMatchCount, int rawTextMatchCount) {
-        if (normalizedQuery == null || normalizedQuery.isBlank()) {
-            return false;
-        }
-        if (rawTextMode) {
-            return rawTextMatchCount > 0;
-        }
-        return rawTextMatchCount > smartMatchCount;
+    static boolean hasRawTextQuery(String normalizedQuery) {
+        return normalizedQuery != null && !normalizedQuery.isBlank();
     }
 
     private static boolean matchesThemeQuery(Set<ShopTheme> themes, Set<ShopTheme> matchedThemes) {

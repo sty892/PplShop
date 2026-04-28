@@ -58,6 +58,7 @@ public class PplshopClient implements ClientModInitializer {
     private final ShopCachePersistenceService cachePersistenceService = new ShopCachePersistenceService();
     private final SnapshotFreshnessPolicy snapshotFreshnessPolicy = new SnapshotFreshnessPolicy();
     private final ShopBrowserSessionState browserSessionState = new ShopBrowserSessionState();
+    private final AdaptiveRefreshBudgetController adaptiveRefreshBudgetController = new AdaptiveRefreshBudgetController();
 
     private ShopSignParser parser;
     private KeyBinding openMenuKeyBinding;
@@ -168,6 +169,7 @@ public class PplshopClient implements ClientModInitializer {
             this.shopCache.clear();
             this.highlightManager.clear();
             this.loadedSignScanner.clearParsedEntryCache();
+            this.adaptiveRefreshBudgetController.stop();
             this.lastPersistedCacheVersion = Long.MIN_VALUE;
             this.cachedRefreshUiState = null;
             this.browserSessionState.clear();
@@ -190,6 +192,7 @@ public class PplshopClient implements ClientModInitializer {
         this.browserSessionState.clear();
         this.loadedSignScanner.clearParsedEntryCache();
         this.activeRefreshJob = null;
+        this.adaptiveRefreshBudgetController.stop();
         this.refreshTriggerSource = RefreshTriggerSource.NONE;
         this.manualRefreshConfirmDeadlineAt = 0L;
         this.lastLowEntryAutoRefreshTick = Long.MIN_VALUE;
@@ -220,7 +223,9 @@ public class PplshopClient implements ClientModInitializer {
         }
 
         if (this.activeRefreshJob != null) {
-            this.activeRefreshJob.step(this.configManager.refreshUxConfig().refreshBudgetPerTick);
+            RefreshUxConfig refreshConfig = this.configManager.refreshUxConfig();
+            int stepBudget = this.adaptiveRefreshBudgetController.budgetForTick(client.getCurrentFps(), refreshConfig);
+            this.activeRefreshJob.step(stepBudget);
             if (this.activeRefreshJob.isDone()) {
                 this.finishRefresh(client);
             }
@@ -279,6 +284,7 @@ public class PplshopClient implements ClientModInitializer {
                 this.tickCounter,
                 ShopSignDiagnosticReason.FULL_REBUILD
         );
+        this.adaptiveRefreshBudgetController.start(client.getCurrentFps(), this.configManager.refreshUxConfig());
         this.refreshTriggerSource = triggerSource == null ? RefreshTriggerSource.NONE : triggerSource;
         this.refreshCachedUiState();
         if (announceStart && client.player != null) {
@@ -294,6 +300,7 @@ public class PplshopClient implements ClientModInitializer {
         this.shopCache.replaceAll(this.activeRefreshJob.entries());
         this.loadedSignScanner.detachJob(this.activeRefreshJob);
         this.activeRefreshJob = null;
+        this.adaptiveRefreshBudgetController.stop();
         this.loadedSignScanner.clearWorldDirty();
         this.lastRefreshCompletedAt = System.currentTimeMillis();
         this.snapshotLoadedFromDisk = false;
@@ -392,6 +399,7 @@ public class PplshopClient implements ClientModInitializer {
     private void rebuildParser() {
         this.loadedSignScanner.clearParsedEntryCache();
         this.activeRefreshJob = null;
+        this.adaptiveRefreshBudgetController.stop();
         this.refreshTriggerSource = RefreshTriggerSource.NONE;
         this.parser = new ShopSignParser(
                 this.configManager.itemAliasConfig(),

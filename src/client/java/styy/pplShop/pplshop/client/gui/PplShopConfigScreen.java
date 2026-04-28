@@ -23,6 +23,7 @@ public final class PplShopConfigScreen extends Screen {
 
     private TextFieldWidget minimumExpectedEntriesField;
     private TextFieldWidget refreshBudgetPerTickField;
+    private TextFieldWidget maxRefreshBudgetPerTickField;
 
     public PplShopConfigScreen(Screen parent, PplShopConfigManager configManager) {
         super(Text.translatable("config.pplshop.title"));
@@ -52,6 +53,8 @@ public final class PplShopConfigScreen extends Screen {
         y = this.addEnumRow(startX, controlX, labelWidth, y, Text.translatable("config.pplshop.preferred_price_basis"), Text.translatable("config.pplshop.preferred_price_basis.tooltip"), this::cyclePreferredPriceBasis, () -> Text.translatable(this.workingCopy.preferredPriceBasis.translationKey()));
         y = this.addNumberRow(startX, controlX, labelWidth, y, Text.translatable("config.pplshop.minimum_expected_entries"), Text.translatable("config.pplshop.minimum_expected_entries.tooltip"), String.valueOf(this.workingCopy.minimumExpectedEntries), field -> this.minimumExpectedEntriesField = field);
         y = this.addNumberRow(startX, controlX, labelWidth, y, Text.translatable("config.pplshop.refresh_budget_per_tick"), Text.translatable("config.pplshop.refresh_budget_per_tick.tooltip"), String.valueOf(this.workingCopy.refreshBudgetPerTick), field -> this.refreshBudgetPerTickField = field);
+        y = this.addBooleanRow(startX, controlX, labelWidth, y, Text.translatable("config.pplshop.adaptive_refresh_budget"), Text.translatable("config.pplshop.adaptive_refresh_budget.tooltip"), () -> this.workingCopy.adaptiveRefreshBudget = !this.workingCopy.adaptiveRefreshBudget, () -> this.workingCopy.adaptiveRefreshBudget);
+        y = this.addNumberRow(startX, controlX, labelWidth, y, Text.translatable("config.pplshop.max_refresh_budget_per_tick"), Text.translatable("config.pplshop.max_refresh_budget_per_tick.tooltip"), String.valueOf(this.workingCopy.maxRefreshBudgetPerTick), field -> this.maxRefreshBudgetPerTickField = field);
 
         int buttonY = Math.min(this.height - 28, y + 12);
         this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.done"), button -> this.saveAndClose())
@@ -138,6 +141,7 @@ public final class PplShopConfigScreen extends Screen {
     private void saveAndClose() {
         this.workingCopy.minimumExpectedEntries = parseInt(this.minimumExpectedEntriesField.getText(), this.workingCopy.minimumExpectedEntries);
         this.workingCopy.refreshBudgetPerTick = parseInt(this.refreshBudgetPerTickField.getText(), this.workingCopy.refreshBudgetPerTick);
+        this.workingCopy.maxRefreshBudgetPerTick = parseInt(this.maxRefreshBudgetPerTickField.getText(), this.workingCopy.maxRefreshBudgetPerTick);
         this.workingCopy.sanitize();
         this.configManager.saveRefreshUxConfig(this.workingCopy);
         if (PplshopClient.instance() != null) {
@@ -167,6 +171,8 @@ public final class PplShopConfigScreen extends Screen {
         copy.minimumExpectedEntries = source.minimumExpectedEntries;
         copy.persistCacheBetweenSessions = source.persistCacheBetweenSessions;
         copy.refreshBudgetPerTick = source.refreshBudgetPerTick;
+        copy.adaptiveRefreshBudget = source.adaptiveRefreshBudget;
+        copy.maxRefreshBudgetPerTick = source.maxRefreshBudgetPerTick;
         copy.preferredPriceBasis = source.preferredPriceBasis;
         copy.sanitize();
         return copy;

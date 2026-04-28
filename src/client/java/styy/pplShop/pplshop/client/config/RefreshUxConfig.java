@@ -10,6 +10,8 @@ public final class RefreshUxConfig {
     public int minimumExpectedEntries = 100;
     public boolean persistCacheBetweenSessions = true;
     public int refreshBudgetPerTick = 12;
+    public boolean adaptiveRefreshBudget = true;
+    public int maxRefreshBudgetPerTick = 600;
     public ShopPriceSortBasis preferredPriceBasis = ShopPriceSortBasis.PER_UNIT;
 
     public static RefreshUxConfig defaults() {
@@ -26,7 +28,8 @@ public final class RefreshUxConfig {
             this.preferredPriceBasis = ShopPriceSortBasis.PER_UNIT;
         }
         this.minimumExpectedEntries = clamp(this.minimumExpectedEntries, 1, 10_000);
-        this.refreshBudgetPerTick = clamp(this.refreshBudgetPerTick, 1, 200);
+        this.refreshBudgetPerTick = clamp(this.refreshBudgetPerTick, 1, 1_200);
+        this.maxRefreshBudgetPerTick = clamp(this.maxRefreshBudgetPerTick, this.refreshBudgetPerTick, 1_200);
     }
 
     private static int clamp(int value, int min, int max) {

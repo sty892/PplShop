@@ -40,9 +40,10 @@ public final class ShopBrowserScreen extends Screen {
     private static final int ENTRY_WIDTH = 56;
     private static final int ENTRY_HEIGHT = 38;
     private static final int ENTRY_GAP = 4;
-    private static final int RAW_TEXT_TOGGLE_WIDTH = 236;
-    private static final int RAW_TEXT_TOGGLE_HEIGHT = 20;
-    private static final int RAW_TEXT_TOGGLE_BOTTOM_MARGIN = 8;
+    private static final int RAW_TEXT_TOGGLE_WIDTH = 164;
+    private static final int RAW_TEXT_TOGGLE_HEIGHT = 18;
+    private static final int RAW_TEXT_TOGGLE_TOP_MARGIN = 12;
+    private static final int RAW_TEXT_EMPTY_LABEL_HEIGHT = 12;
     private static final long SEARCH_DEBOUNCE_MS = 150L;
 
     private final ShopCache shopCache;
@@ -157,7 +158,7 @@ public final class ShopBrowserScreen extends Screen {
         this.rawTextToggleButton = ButtonWidget.builder(Text.translatable("screen.pplshop.search.show_sign_matches", 0), button -> this.toggleRawTextMode())
                 .dimensions(0, 0, RAW_TEXT_TOGGLE_WIDTH, RAW_TEXT_TOGGLE_HEIGHT)
                 .build();
-        this.rawTextToggleButton.visible = false;
+        this.rawTextToggleButton.visible = true;
         this.rawTextToggleButton.active = false;
         this.addDrawableChild(this.rawTextToggleButton);
 
@@ -360,9 +361,6 @@ public final class ShopBrowserScreen extends Screen {
                 .filter(indexed -> ShopSearchMatcher.matchesRawTextQuery(indexed.rawTextBlob(), this.appliedNormalizedQuery))
                 .sorted((left, right) -> ShopEntryComparator.forMode(this.sortMode).compare(left.entry(), right.entry()))
                 .toList();
-        if (this.rawTextMode && this.rawTextMatchedEntries.isEmpty()) {
-            this.rawTextMode = false;
-        }
         this.filteredIndexedEntries = this.rawTextMode ? this.rawTextMatchedEntries : smartMatches;
         this.filteredEntries = this.filteredIndexedEntries.stream()
                 .map(IndexedEntry::entry)
@@ -399,7 +397,7 @@ public final class ShopBrowserScreen extends Screen {
 
         int gridWidth = columns * ENTRY_WIDTH + Math.max(0, columns - 1) * ENTRY_GAP;
         int startX = (this.width - gridWidth) / 2;
-        int gridTop = this.activeLayout().gridTop();
+        int gridTop = this.gridTop();
 
         for (int slotIndex = 0; slotIndex < this.entryWidgets.size(); slotIndex++) {
             int visibleRow = slotIndex / columns;
@@ -542,8 +540,8 @@ public final class ShopBrowserScreen extends Screen {
 
     private int getVisibleRowCount() {
         ShopBrowserLayout.Layout activeLayout = this.activeLayout();
-        int gridBottom = this.height - activeLayout.gridBottomPadding() - this.footerReservedSpace();
-        int gridHeight = Math.max(ENTRY_HEIGHT, gridBottom - activeLayout.gridTop());
+        int gridBottom = this.height - activeLayout.gridBottomPadding();
+        int gridHeight = Math.max(ENTRY_HEIGHT, gridBottom - this.gridTop());
         return Math.max(1, gridHeight / (ENTRY_HEIGHT + ENTRY_GAP));
     }
 
@@ -606,8 +604,8 @@ public final class ShopBrowserScreen extends Screen {
 
         ShopBrowserLayout.Layout activeLayout = this.activeLayout();
         this.scrollbarTrackX = this.width - 10;
-        this.scrollbarTrackY = activeLayout.gridTop();
-        this.scrollbarTrackHeight = Math.max(16, this.height - activeLayout.gridBottomPadding() - this.footerReservedSpace() - activeLayout.gridTop());
+        this.scrollbarTrackY = this.gridTop();
+        this.scrollbarTrackHeight = Math.max(16, this.height - activeLayout.gridBottomPadding() - this.gridTop());
         int totalRows = Math.max(1, (int) Math.ceil(this.filteredEntries.size() / (double) this.getColumnCount()));
         int visibleRows = this.getVisibleRowCount();
         this.scrollbarThumbHeight = Math.max(12, (int) (this.scrollbarTrackHeight * (visibleRows / (double) totalRows)));
@@ -669,6 +667,7 @@ public final class ShopBrowserScreen extends Screen {
                     0xFFFFD2A8
             );
         }
+        this.renderRawTextSearchState(context);
     }
 
     private void renderDiscordSupport(DrawContext context) {
@@ -761,7 +760,7 @@ public final class ShopBrowserScreen extends Screen {
     }
 
     private void toggleRawTextMode() {
-        if (!this.shouldShowRawTextToggleButton()) {
+        if (!ShopSearchMatcher.hasRawTextQuery(this.appliedNormalizedQuery)) {
             return;
         }
         this.rawTextMode = !this.rawTextMode;
@@ -772,34 +771,55 @@ public final class ShopBrowserScreen extends Screen {
         if (this.rawTextToggleButton == null) {
             return;
         }
-        boolean visible = this.shouldShowRawTextToggleButton();
-        this.rawTextToggleButton.visible = visible;
-        this.rawTextToggleButton.active = visible;
-        if (!visible) {
-            return;
-        }
+        ShopBrowserLayout.Bounds searchBounds = this.activeLayout().searchBounds();
+        boolean hasQuery = ShopSearchMatcher.hasRawTextQuery(this.appliedNormalizedQuery);
+        this.rawTextToggleButton.visible = true;
+        this.rawTextToggleButton.active = hasQuery;
         this.rawTextToggleButton.setDimensionsAndPosition(
-                (this.width - RAW_TEXT_TOGGLE_WIDTH) / 2,
-                this.height - RAW_TEXT_TOGGLE_BOTTOM_MARGIN - RAW_TEXT_TOGGLE_HEIGHT,
+                searchBounds.x() + Math.max(0, (searchBounds.width() - RAW_TEXT_TOGGLE_WIDTH) / 2),
+                this.rawTextToggleY(),
                 RAW_TEXT_TOGGLE_WIDTH,
                 RAW_TEXT_TOGGLE_HEIGHT
         );
-        this.rawTextToggleButton.setMessage(this.rawTextMode
-                ? Text.translatable("screen.pplshop.search.back_to_smart")
-                : Text.translatable("screen.pplshop.search.show_sign_matches", this.rawTextMatchedEntries.size()));
+        this.rawTextToggleButton.setMessage(this.rawTextToggleLabel());
     }
 
-    private boolean shouldShowRawTextToggleButton() {
-        return ShopSearchMatcher.shouldShowRawTextToggle(
-                this.appliedNormalizedQuery,
-                this.rawTextMode,
-                this.filteredIndexedEntries == null ? 0 : (this.rawTextMode ? this.rawTextMatchedEntries.size() : this.filteredIndexedEntries.size()),
-                this.rawTextMatchedEntries.size()
+    private Text rawTextToggleLabel() {
+        return Text.literal((this.rawTextMode ? "\u25B2 " : "\u25BC ") + Text.translatable("screen.pplshop.search.sign_matches", this.rawTextMatchedEntries.size()).getString());
+    }
+
+    private void renderRawTextSearchState(DrawContext context) {
+        if (!this.shouldRenderRawTextEmptyMessage()) {
+            return;
+        }
+        int y = this.rawTextToggleButton.getY() + RAW_TEXT_TOGGLE_HEIGHT + 4;
+        context.drawCenteredTextWithShadow(
+                this.textRenderer,
+                Text.translatable("screen.pplshop.search.no_sign_matches"),
+                this.rawTextToggleButton.getX() + (this.rawTextToggleButton.getWidth() / 2),
+                y,
+                0xFFD8D0C2
         );
     }
 
-    private int footerReservedSpace() {
-        return this.shouldShowRawTextToggleButton() ? RAW_TEXT_TOGGLE_HEIGHT + RAW_TEXT_TOGGLE_BOTTOM_MARGIN + 4 : 0;
+    private boolean shouldRenderRawTextEmptyMessage() {
+        return ShopSearchMatcher.hasRawTextQuery(this.appliedNormalizedQuery) && this.rawTextMatchedEntries.isEmpty();
+    }
+
+    private int rawTextToggleY() {
+        ShopBrowserLayout.Layout activeLayout = this.activeLayout();
+        ShopBrowserLayout.Bounds searchBounds = activeLayout.searchBounds();
+        int y = searchBounds.y() + searchBounds.height() + RAW_TEXT_TOGGLE_TOP_MARGIN;
+        if (this.currentRefreshState().isLowEntrySnapshot()) {
+            y = Math.max(y, activeLayout.lowEntryHintY() + 16);
+        }
+        return y;
+    }
+
+    private int gridTop() {
+        int toggleBottom = this.rawTextToggleY() + RAW_TEXT_TOGGLE_HEIGHT + 8;
+        int extraHeight = this.shouldRenderRawTextEmptyMessage() ? RAW_TEXT_EMPTY_LABEL_HEIGHT + 6 : 0;
+        return Math.max(this.activeLayout().gridTop(), toggleBottom + extraHeight);
     }
 
     private record IndexedEntry(ShopSignEntry entry, String searchBlob, String rawTextBlob, Set<ShopTheme> themes) {

@@ -6,5 +6,7 @@
   "minimumExpectedEntries": 100,
   "persistCacheBetweenSessions": true,
   "preferredPriceBasis": "PER_UNIT",
-  "refreshBudgetPerTick": 12
+  "refreshBudgetPerTick": 12,
+  "adaptiveRefreshBudget": true,
+  "maxRefreshBudgetPerTick": 600
 }

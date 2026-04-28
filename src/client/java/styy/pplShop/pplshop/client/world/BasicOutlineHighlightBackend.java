@@ -5,7 +5,6 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
-import net.minecraft.block.BlockState;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
@@ -37,6 +36,10 @@ public final class BasicOutlineHighlightBackend implements HighlightBackend {
             RenderLayer.MultiPhaseParameters.builder().build(false)
     );
 
+    static RenderLayer highlightLayer() {
+        return HIGHLIGHT_LAYER;
+    }
+
     @Override
     public String id() {
         return "basic_outline";
@@ -55,25 +58,30 @@ public final class BasicOutlineHighlightBackend implements HighlightBackend {
 
         Vec3d cameraPos = context.camera().getPos();
         MatrixStack matrices = context.matrixStack();
+        VertexConsumer fillConsumer = context.consumers().getBuffer(RenderLayer.getDebugFilledBox());
         VertexConsumer consumer = context.consumers().getBuffer(HIGHLIGHT_LAYER);
 
         for (ActiveHighlightState.HighlightedTarget target : HighlightGeometry.uniqueTargets(state).values()) {
             boolean focused = state.isFocused(target.entry());
             float[] outlineColor = this.outlineColor(target.priceColors(), focused);
             if (target.relation().linkedContainer() && target.relation().containerPos() != null) {
-                this.renderContainerOutline(matrices, consumer, cameraPos, target, outlineColor);
+                float[] fillColor = this.fillColor(target.priceColors(), focused);
+                this.renderContainerOutline(matrices, fillConsumer, consumer, cameraPos, target, fillColor, outlineColor);
             } else {
                 float[] signFaceColor = this.signFaceColor(target.priceColors(), focused);
-                this.renderSignOutline(context.world(), matrices, consumer, cameraPos, target, outlineColor, signFaceColor);
+                float[] fillColor = this.fillColor(target.priceColors(), focused);
+                this.renderSignOutline(context.world(), matrices, fillConsumer, consumer, cameraPos, target, fillColor, outlineColor, signFaceColor);
             }
         }
     }
 
     private void renderContainerOutline(
             MatrixStack matrices,
+            VertexConsumer fillConsumer,
             VertexConsumer consumer,
             Vec3d cameraPos,
             ActiveHighlightState.HighlightedTarget target,
+            float[] fillColor,
             float[] outlineColor
     ) {
         HighlightTargetRelation relation = target.relation();
@@ -82,15 +90,17 @@ public final class BasicOutlineHighlightBackend implements HighlightBackend {
         }
 
         Box box = new Box(relation.containerPos()).expand(0.018D).offset(-cameraPos.x, -cameraPos.y, -cameraPos.z);
-        VertexRendering.drawBox(matrices, consumer, box, outlineColor[0], outlineColor[1], outlineColor[2], outlineColor[3]);
+        this.drawFilledOutline(matrices, fillConsumer, consumer, box, fillColor, outlineColor);
     }
 
     private void renderSignOutline(
             net.minecraft.client.world.ClientWorld world,
             MatrixStack matrices,
+            VertexConsumer fillConsumer,
             VertexConsumer consumer,
             Vec3d cameraPos,
             ActiveHighlightState.HighlightedTarget target,
+            float[] fillColor,
             float[] outlineColor,
             float[] signFaceColor
     ) {
@@ -102,12 +112,37 @@ public final class BasicOutlineHighlightBackend implements HighlightBackend {
         Box faceBox = HighlightGeometry.createSignFaceBox(world, relation);
         if (faceBox != null) {
             Box shifted = faceBox.offset(-cameraPos.x, -cameraPos.y, -cameraPos.z);
-            VertexRendering.drawBox(matrices, consumer, shifted, signFaceColor[0], signFaceColor[1], signFaceColor[2], signFaceColor[3]);
+            this.drawFilledOutline(matrices, fillConsumer, consumer, shifted, fillColor, signFaceColor);
             return;
         }
 
         Box fallback = new Box(relation.signPos()).expand(0.02D).offset(-cameraPos.x, -cameraPos.y, -cameraPos.z);
-        VertexRendering.drawBox(matrices, consumer, fallback, outlineColor[0], outlineColor[1], outlineColor[2], outlineColor[3]);
+        this.drawFilledOutline(matrices, fillConsumer, consumer, fallback, fillColor, outlineColor);
+    }
+
+    private void drawFilledOutline(
+            MatrixStack matrices,
+            VertexConsumer fillConsumer,
+            VertexConsumer outlineConsumer,
+            Box box,
+            float[] fillColor,
+            float[] outlineColor
+    ) {
+        VertexRendering.drawFilledBox(
+                matrices,
+                fillConsumer,
+                box.minX,
+                box.minY,
+                box.minZ,
+                box.maxX,
+                box.maxY,
+                box.maxZ,
+                fillColor[0],
+                fillColor[1],
+                fillColor[2],
+                fillColor[3]
+        );
+        VertexRendering.drawBox(matrices, outlineConsumer, box, outlineColor[0], outlineColor[1], outlineColor[2], outlineColor[3]);
     }
 
     private float[] outlineColor(PriceColorResolver.PriceColors priceColors, boolean focused) {
@@ -123,6 +158,13 @@ public final class BasicOutlineHighlightBackend implements HighlightBackend {
         }
         int color = priceColors.priceTextColor() & 0xFFFFFF;
         return rgba(color, focused ? 0.98F : 0.90F);
+    }
+
+    private float[] fillColor(PriceColorResolver.PriceColors priceColors, boolean focused) {
+        if (priceColors == null || !priceColors.tinted()) {
+            return rgba(focused ? 0xFFE6B5 : 0xEBCB92, focused ? 0.20F : 0.14F);
+        }
+        return rgba(priceColors.priceTextColor() & 0xFFFFFF, focused ? 0.18F : 0.12F);
     }
 
     private static float[] rgba(int rgb, float alpha) {

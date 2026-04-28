@@ -16,15 +16,14 @@ class ShopSearchMatcherTest {
 
     @Test
     void rawTextQueryOnlyMatchesRealSignText() {
-        assertTrue(ShopSearchMatcher.matchesRawTextQuery("дубовое дерево акция", "дерево"));
-        assertFalse(ShopSearchMatcher.matchesRawTextQuery("oak log", "дерево"));
+        assertTrue(ShopSearchMatcher.matchesRawTextQuery("dubovoe derevo akciya", "derevo"));
+        assertFalse(ShopSearchMatcher.matchesRawTextQuery("oak log", "derevo"));
     }
 
     @Test
-    void rawTextToggleAppearsOnlyWhenItAddsSomething() {
-        assertTrue(ShopSearchMatcher.shouldShowRawTextToggle("дерево", false, 3, 7));
-        assertFalse(ShopSearchMatcher.shouldShowRawTextToggle("дерево", false, 7, 7));
-        assertTrue(ShopSearchMatcher.shouldShowRawTextToggle("дерево", true, 7, 7));
-        assertFalse(ShopSearchMatcher.shouldShowRawTextToggle("", false, 0, 5));
+    void rawTextToggleNeedsNonBlankQuery() {
+        assertTrue(ShopSearchMatcher.hasRawTextQuery("derevo"));
+        assertFalse(ShopSearchMatcher.hasRawTextQuery(""));
+        assertFalse(ShopSearchMatcher.hasRawTextQuery("   "));
     }
 }

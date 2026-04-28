@@ -74,6 +74,7 @@ public final class HighlightController {
                 && this.activeState.isEmpty()) {
             this.basicBackend.clear();
             this.experimentalBackend.clear();
+            this.shaderSafeBackend.clear();
             return;
         }
 
